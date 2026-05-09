@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import Avatar from './Avatar.jsx';
 
 const menuItems = [
@@ -14,6 +15,7 @@ const menuItems = [
 
 export default function UserSidebar() {
   const { user, logout } = useAuth();
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -29,8 +31,11 @@ export default function UserSidebar() {
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="h-screen flex flex-col overflow-hidden flex-shrink-0 sidebar-3d"
       style={{
-        background: 'linear-gradient(180deg, #0f172a 0%, #1a1040 50%, #0f172a 100%)',
-        borderRight: '1px solid rgba(99,102,241,0.15)',
+        background:   darkMode
+          ? 'linear-gradient(180deg, #0f172a 0%, #1a1040 50%, #0f172a 100%)'
+          : 'linear-gradient(180deg, #ffffff 0%, #f0f4ff 50%, #ffffff 100%)',
+        borderRight:  darkMode ? '1px solid rgba(99,102,241,0.15)' : '1px solid rgba(99,102,241,0.2)',
+        transition:   'background 0.4s ease',
       }}>
 
       {/* Logo */}
@@ -44,8 +49,8 @@ export default function UserSidebar() {
                 🗳️
               </motion.div>
               <div>
-                <p className="text-white font-bold text-sm">VoteApp</p>
-                <p className="text-slate-500 text-xs">Voter Panel</p>
+                <p className="font-bold text-sm" style={{ color: darkMode ? '#fff' : '#1e1b4b' }}>VoteApp</p>
+                <p className="text-xs" style={{ color: darkMode ? '#475569' : '#6366f1' }}>Voter Panel</p>
               </div>
             </motion.div>
           )}
@@ -91,13 +96,16 @@ export default function UserSidebar() {
                 whileHover={{ x: collapsed ? 0 : 4, scale: 1.01 }}
                 whileTap={{ scale: 0.97 }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden cursor-pointer ${
-                  isActive ? 'text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  isActive ? '' : 'hover:bg-white/5'
                 }`}
                 style={isActive ? {
-                  background: 'linear-gradient(90deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05))',
+                  background: darkMode
+                    ? 'linear-gradient(90deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05))'
+                    : 'linear-gradient(90deg, rgba(99,102,241,0.15), rgba(99,102,241,0.03))',
                   borderLeft: '2px solid #6366f1',
                   boxShadow:  'inset 0 0 20px rgba(99,102,241,0.08)',
-                } : {}}>
+                  color: darkMode ? '#fff' : '#4338ca',
+                } : { color: darkMode ? '#94a3b8' : '#64748b' }}>
 
                 {isActive && (
                   <motion.div layoutId="userActiveGlow" className="absolute inset-0 rounded-xl"

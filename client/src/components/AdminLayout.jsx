@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AdminSidebar from './AdminSidebar.jsx';
 import NotificationDropdown from './NotificationDropdown.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import Avatar from './Avatar.jsx';
+import DarkModeToggle from './DarkModeToggle.jsx';
 import socket from '../socket.js';
 
 // Seed notifications shown on first load
@@ -25,6 +27,7 @@ export default function AdminLayout() {
   const [notifications, setNotifications] = useState(SEED_NOTIFICATIONS);
   const bellRef = useRef(null);
   const { user } = useAuth();
+  const { darkMode, setDarkMode } = useTheme();
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter(n => n.unread).length;
@@ -68,7 +71,12 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+      style={{
+        background: darkMode
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+          : 'linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%)',
+        transition: 'background 0.4s ease',
+      }}>
 
       {/* Notification Portal */}
       <NotificationDropdown
@@ -109,9 +117,10 @@ export default function AdminLayout() {
         {/* Top Navbar */}
         <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b"
           style={{
-            background: 'rgba(15,23,42,0.8)',
+            background:     darkMode ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.8)',
             backdropFilter: 'blur(20px)',
-            borderColor: 'rgba(99,102,241,0.1)',
+            borderColor:    darkMode ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.15)',
+            transition:     'background 0.4s ease',
           }}>
 
           {/* Left */}
@@ -124,15 +133,23 @@ export default function AdminLayout() {
             </motion.button>
 
             {/* Search */}
-            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-56">
-              <span className="text-slate-500 text-sm">🔍</span>
+            <div className="hidden sm:flex items-center gap-2 rounded-xl px-3 py-2 w-56"
+              style={{
+                background:   darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(99,102,241,0.06)',
+                border:       darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99,102,241,0.15)',
+              }}>
+              <span className="text-sm" style={{ color: darkMode ? '#475569' : '#94a3b8' }}>🔍</span>
               <input placeholder="Search..."
-                className="bg-transparent text-sm text-slate-300 placeholder-slate-600 focus:outline-none w-full" />
+                className="bg-transparent text-sm focus:outline-none w-full"
+                style={{ color: darkMode ? '#cbd5e1' : '#374151' }} />
             </div>
           </div>
 
           {/* Right */}
           <div className="flex items-center gap-2">
+
+            {/* Dark/Light Mode Toggle */}
+            <DarkModeToggle size="sm" />
 
             {/* Notification Bell */}
             <div className="relative">

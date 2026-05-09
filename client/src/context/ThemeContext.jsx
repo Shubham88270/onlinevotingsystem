@@ -74,22 +74,73 @@ export const fontFamilies = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme,      setTheme]      = useState(() => localStorage.getItem('theme')      || 'indigo');
-  const [fontSize,   setFontSize]   = useState(() => localStorage.getItem('fontSize')   || 'md');
-  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('fontFamily') || 'inter');
-  const [darkMode,   setDarkMode]   = useState(() => localStorage.getItem('darkMode')   !== 'false');
+  const [theme,      setTheme]      = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved && themes[saved]) ? saved : 'indigo';
+  });
+  const [fontSize,   setFontSize]   = useState(() => {
+    const saved = localStorage.getItem('fontSize');
+    return (saved && fontSizes[saved]) ? saved : 'md';
+  });
+  const [fontFamily, setFontFamily] = useState(() => {
+    const saved = localStorage.getItem('fontFamily');
+    return (saved && fontFamilies[saved]) ? saved : 'inter';
+  });
+  const [darkMode,   setDarkMode]   = useState(() => localStorage.getItem('darkMode') !== 'false');
 
-  // Apply CSS variables whenever theme changes
+  // Apply CSS variables + dark/light mode class
   useEffect(() => {
-    const t = themes[theme];
+    const t = themes[theme] || themes['indigo'];
     const r = document.documentElement;
+
+    // Theme colors
     r.style.setProperty('--color-primary',   t.primary);
     r.style.setProperty('--color-secondary', t.secondary);
     r.style.setProperty('--color-accent',    t.accent);
     r.style.setProperty('--font-size-base',  fontSizes[fontSize].base);
     r.style.setProperty('--font-family',     fontFamilies[fontFamily].value);
+
+    // Dark / Light mode CSS variables
+    if (darkMode) {
+      r.classList.add('dark');
+      r.classList.remove('light');
+      r.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)';
+      r.style.setProperty('--bg-primary',    '#0f172a');
+      r.style.setProperty('--bg-secondary',  '#1e293b');
+      r.style.setProperty('--bg-card',       'rgba(255,255,255,0.04)');
+      r.style.setProperty('--bg-sidebar',    'rgba(15,23,42,0.95)');
+      r.style.setProperty('--text-primary',  '#f1f5f9');
+      r.style.setProperty('--text-secondary','#94a3b8');
+      r.style.setProperty('--text-muted',    '#475569');
+      r.style.setProperty('--border-color',  'rgba(255,255,255,0.08)');
+      r.style.setProperty('--shadow-color',  'rgba(0,0,0,0.4)');
+      r.style.setProperty('--glass-bg',      'rgba(255,255,255,0.04)');
+      r.style.setProperty('--glass-border',  'rgba(255,255,255,0.08)');
+      document.body.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)';
+      document.body.style.color      = '#f1f5f9';
+    } else {
+      r.classList.add('light');
+      r.classList.remove('dark');
+      r.style.background = 'linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%)';
+      r.style.setProperty('--bg-primary',    '#f8fafc');
+      r.style.setProperty('--bg-secondary',  '#ffffff');
+      r.style.setProperty('--bg-card',       'rgba(255,255,255,0.85)');
+      r.style.setProperty('--bg-sidebar',    'rgba(248,250,252,0.98)');
+      r.style.setProperty('--text-primary',  '#0f172a');
+      r.style.setProperty('--text-secondary','#475569');
+      r.style.setProperty('--text-muted',    '#94a3b8');
+      r.style.setProperty('--border-color',  'rgba(0,0,0,0.08)');
+      r.style.setProperty('--shadow-color',  'rgba(0,0,0,0.1)');
+      r.style.setProperty('--glass-bg',      'rgba(255,255,255,0.7)');
+      r.style.setProperty('--glass-border',  'rgba(99,102,241,0.15)');
+      document.body.style.background = 'linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f0ff 100%)';
+      document.body.style.color      = '#0f172a';
+    }
+
     document.body.style.fontSize   = fontSizes[fontSize].base;
     document.body.style.fontFamily = fontFamilies[fontFamily].value;
+    document.body.style.transition = 'background 0.4s ease, color 0.4s ease';
+
     localStorage.setItem('theme',      theme);
     localStorage.setItem('fontSize',   fontSize);
     localStorage.setItem('fontFamily', fontFamily);

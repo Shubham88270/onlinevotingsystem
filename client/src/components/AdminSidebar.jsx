@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import Avatar from './Avatar.jsx';
 
 const menuItems = [
@@ -17,6 +18,7 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const { user, logout } = useAuth();
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -32,8 +34,11 @@ export default function AdminSidebar() {
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="h-screen flex flex-col overflow-hidden flex-shrink-0"
       style={{
-        background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-        borderRight: '1px solid rgba(99,102,241,0.15)',
+        background:  darkMode
+          ? 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+          : 'linear-gradient(180deg, #ffffff 0%, #f0f4ff 50%, #ffffff 100%)',
+        borderRight: darkMode ? '1px solid rgba(99,102,241,0.15)' : '1px solid rgba(99,102,241,0.2)',
+        transition:  'background 0.4s ease',
       }}>
 
       {/* Logo + collapse toggle */}
@@ -49,8 +54,8 @@ export default function AdminSidebar() {
                 🗳️
               </div>
               <div>
-                <p className="text-white font-bold text-sm leading-tight">VoteApp</p>
-                <p className="text-slate-500 text-xs">Admin Panel</p>
+                <p className="font-bold text-sm leading-tight" style={{ color: darkMode ? '#fff' : '#1e1b4b' }}>VoteApp</p>
+                <p className="text-xs" style={{ color: darkMode ? '#475569' : '#6366f1' }}>Admin Panel</p>
               </div>
             </motion.div>
           )}
@@ -98,16 +103,15 @@ export default function AdminSidebar() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
                 whileHover={{ x: collapsed ? 0 : 3 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden`}
                 style={isActive ? {
-                  background: 'linear-gradient(90deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05))',
+                  background: darkMode
+                    ? 'linear-gradient(90deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05))'
+                    : 'linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02))',
                   borderLeft: '2px solid #3b82f6',
-                  boxShadow: 'inset 0 0 20px rgba(59,130,246,0.08)',
-                } : {}}>
+                  boxShadow:  'inset 0 0 20px rgba(59,130,246,0.08)',
+                  color: darkMode ? '#fff' : '#1d4ed8',
+                } : { color: darkMode ? '#94a3b8' : '#64748b' }}>
 
                 {/* Active glow */}
                 {isActive && (

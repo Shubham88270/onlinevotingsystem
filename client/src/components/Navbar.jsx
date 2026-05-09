@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
+import DarkModeToggle from './DarkModeToggle.jsx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { darkMode, setDarkMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,6 +62,9 @@ export default function Navbar() {
 
         {/* Right Side — Desktop */}
         <div className="hidden md:flex items-center gap-3">
+
+          {/* Dark/Light Mode Toggle */}
+          <DarkModeToggle size="sm" />
           {user ? (
             <div className="relative">
               {/* Profile Button */}
@@ -171,6 +177,11 @@ export default function Navbar() {
           {user ? (
             <div className="border-t border-indigo-600 pt-2 mt-2">
               <p className="text-indigo-300 text-xs px-3 mb-2">{user.name} · {user.email}</p>
+              {/* Dark mode toggle mobile */}
+              <div className="flex items-center gap-2 py-2 px-3">
+                <span className="text-white text-sm">{darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
+                <DarkModeToggle size="sm" />
+              </div>
               <button
                 onClick={handleLogout}
                 className="w-full text-left text-red-300 py-2 px-3 rounded-lg hover:bg-indigo-600 text-sm"
@@ -179,13 +190,20 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <Link
-              to="/auth"
-              onClick={() => setMenuOpen(false)}
-              className="block bg-white text-indigo-700 py-2 px-3 rounded-lg text-sm font-semibold text-center mt-2"
-            >
-              Login / Register
-            </Link>
+            <>
+              {/* Dark mode toggle mobile (logged out) */}
+              <div className="flex items-center gap-2 py-2 px-3">
+                <span className="text-white text-sm">{darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
+                <DarkModeToggle size="sm" />
+              </div>
+              <Link
+                to="/auth"
+                onClick={() => setMenuOpen(false)}
+                className="block bg-white text-indigo-700 py-2 px-3 rounded-lg text-sm font-semibold text-center mt-2"
+              >
+                Login / Register
+              </Link>
+            </>
           )}
         </div>
       )}

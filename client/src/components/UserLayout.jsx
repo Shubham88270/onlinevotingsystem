@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import UserSidebar from './UserSidebar.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import DarkModeToggle from './DarkModeToggle.jsx';
+import Avatar from './Avatar.jsx';
 
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { darkMode, setDarkMode } = useTheme();
+  const navigate  = useNavigate();
+  const { darkMode } = useTheme();
+  const { user }  = useAuth();
+
+  const navBg     = darkMode ? 'rgba(15,23,42,0.85)'   : 'rgba(255,255,255,0.85)';
+  const navBorder = darkMode ? 'rgba(99,102,241,0.1)'  : 'rgba(99,102,241,0.15)';
+  const searchBg  = darkMode ? 'rgba(255,255,255,0.05)': 'rgba(99,102,241,0.06)';
+  const searchBdr = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.15)';
+  const textColor = darkMode ? '#cbd5e1'               : '#374151';
+  const mutedColor= darkMode ? '#475569'               : '#94a3b8';
 
   return (
     <div className="flex h-screen overflow-hidden"
@@ -45,23 +56,62 @@ export default function UserLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-        {/* Mobile topbar */}
-        <div className="md:hidden flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b"
+        {/* ── Top Navbar (same style as Admin) ── */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b"
           style={{
-            background: darkMode ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.8)',
+            background:     navBg,
             backdropFilter: 'blur(20px)',
-            borderColor: darkMode ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.15)',
-            transition: 'background 0.4s ease',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderColor:    navBorder,
+            transition:     'background 0.4s ease',
           }}>
-          <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-            onClick={() => setSidebarOpen(true)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(99,102,241,0.1)', color: darkMode ? '#94a3b8' : '#6366f1' }}>
-            ☰
-          </motion.button>
-          <span className="font-bold flex-1" style={{ color: darkMode ? '#fff' : '#1e1b4b' }}>🗳️ VoteApp</span>
-          {/* Dark/Light toggle */}
-          <DarkModeToggle size="sm" />
+
+          {/* Left */}
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <motion.button
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: searchBg, color: mutedColor }}>
+              ☰
+            </motion.button>
+
+            {/* Search bar */}
+            <div className="hidden sm:flex items-center gap-2 rounded-xl px-3 py-2 w-56"
+              style={{ background: searchBg, border: `1px solid ${searchBdr}` }}>
+              <span className="text-sm" style={{ color: mutedColor }}>🔍</span>
+              <input
+                placeholder="Search..."
+                className="bg-transparent text-sm focus:outline-none w-full"
+                style={{ color: textColor }}
+              />
+            </div>
+          </div>
+
+          {/* Right */}
+          <div className="flex items-center gap-2">
+
+            {/* Dark/Light toggle */}
+            <DarkModeToggle size="sm" />
+
+            {/* Profile button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/dashboard/profile')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-colors"
+              style={{
+                background:  searchBg,
+                borderColor: searchBdr,
+              }}>
+              <Avatar user={user} size={28}
+                style={{ borderRadius: 8, border: '1px solid rgba(99,102,241,0.4)' }} />
+              <span className="text-sm hidden sm:block" style={{ color: textColor }}>
+                {user?.name}
+              </span>
+            </motion.button>
+          </div>
         </div>
 
         {/* Page content with route transition */}

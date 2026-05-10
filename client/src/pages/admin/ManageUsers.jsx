@@ -104,7 +104,7 @@ export default function ManageUsers() {
         const { data } = await api.post('/auth/admin/register-user', { name:r.name, email:r.email, password:r.password, branch:r.branch, college:r.college, university:r.university, rollNo:r.rollNo, phone:r.phone });
         ok++;
         if (data.requiresOTP) {
-          setOtpModal({ userId:data.userId, email:r.email, name:r.name, hasPhone:data.hasPhone, step:'email' });
+          setOtpModal({ userId:data.userId, email:r.email, name:r.name });
           setOtpValue(''); setOtpMsg('');
         }
       } catch (err) { toast.error(`${r.email}: ${err.response?.data?.message || 'Error'}`); }
@@ -119,37 +119,15 @@ export default function ManageUsers() {
     try {
       const { data } = await api.post('/auth/verify-otp', { userId:otpModal.userId, otp:otpValue });
       toast.success(`✅ ${otpModal.name} email verified! ID: ${data.voterId}`);
-      // If user has phone, move to phone OTP step
-      if (otpModal.hasPhone) {
-        setOtpModal(prev => ({ ...prev, step:'phone' }));
-        setOtpValue(''); setOtpMsg('📱 Now verify phone number OTP sent to email.');
-      } else {
-        setOtpModal(null); setOtpValue(''); fetchUsers();
-      }
-    } catch (err) { setOtpMsg(err.response?.data?.message || '❌ Invalid OTP'); }
-    finally { setOtpLoading(false); }
-  };
-
-  const handleVerifyPhoneOTP = async () => {
-    if (otpValue.length !== 6) return setOtpMsg('❌ Enter 6-digit phone OTP');
-    setOtpLoading(true);
-    try {
-      await api.post('/auth/verify-phone-otp', { userId:otpModal.userId, otp:otpValue });
-      toast.success(`✅ ${otpModal.name} phone verified!`);
       setOtpModal(null); setOtpValue(''); fetchUsers();
-    } catch (err) { setOtpMsg(err.response?.data?.message || '❌ Invalid phone OTP'); }
+    } catch (err) { setOtpMsg(err.response?.data?.message || '❌ Invalid OTP'); }
     finally { setOtpLoading(false); }
   };
 
   const handleResendOTP = async () => {
     try {
-      if (otpModal.step === 'phone') {
-        await api.post('/auth/resend-phone-otp', { userId:otpModal.userId });
-        setOtpMsg('✅ Phone OTP resent to email!');
-      } else {
-        await api.post('/auth/resend-otp', { userId:otpModal.userId });
-        setOtpMsg('✅ Email OTP resent!');
-      }
+      await api.post('/auth/resend-otp', { userId:otpModal.userId });
+      setOtpMsg('✅ OTP resent to email!');
     } catch (err) { setOtpMsg(err.response?.data?.message || 'Failed'); }
   };
 
@@ -443,44 +421,22 @@ export default function ManageUsers() {
             <motion.div initial={{ scale:0.9, y:20 }} animate={{ scale:1, y:0 }} exit={{ scale:0.9, y:20 }}
               className="rounded-2xl p-8 max-w-sm w-full text-center" style={{ background:'rgba(15,23,42,0.95)', border:'1px solid rgba(99,102,241,0.3)', boxShadow:'0 25px 60px rgba(0,0,0,0.5)' }}>
 
-              {/* Step indicator */}
-              {otpModal.hasPhone && (
-                <div className="flex items-center justify-center gap-2 mb-5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                      style={{ background: otpModal.step === 'email' ? 'rgba(59,130,246,0.3)' : 'rgba(16,185,129,0.3)', border: `1px solid ${otpModal.step === 'email' ? '#3b82f6' : '#10b981'}`, color: otpModal.step === 'email' ? '#93c5fd' : '#6ee7b7' }}>
-                      {otpModal.step === 'email' ? '1' : '✓'}
-                    </div>
-                    <span className="text-xs text-slate-500">Email OTP</span>
-                  </div>
-                  <div className="w-8 h-px" style={{ background:'rgba(255,255,255,0.1)' }} />
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                      style={{ background: otpModal.step === 'phone' ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${otpModal.step === 'phone' ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, color: otpModal.step === 'phone' ? '#93c5fd' : '#475569' }}>
-                      2
-                    </div>
-                    <span className="text-xs text-slate-500">Phone OTP</span>
-                  </div>
-                </div>
-              )}
+              {/* Step indicator removed — phone OTP disabled */}
 
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
-                style={{ background: otpModal.step === 'phone' ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)', border: `1px solid ${otpModal.step === 'phone' ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)'}` }}>
-                {otpModal.step === 'phone' ? '📱' : '📧'}
+                style={{ background:'rgba(59,130,246,0.1)', border:'1px solid rgba(59,130,246,0.2)' }}>
+                📧
               </div>
 
               <h3 className="text-xl font-bold text-white mb-1">
-                {otpModal.step === 'phone' ? 'Phone Verification' : 'Email Verification'}
+                Email Verification
               </h3>
-              <p className="text-slate-500 text-sm mb-1">
-                {otpModal.step === 'phone' ? 'Phone OTP sent to:' : 'Email OTP sent to:'}
-              </p>
-              <p className="font-semibold mb-3" style={{ color: otpModal.step === 'phone' ? '#6ee7b7' : '#60a5fa' }}>
+              <p className="text-slate-500 text-sm mb-1">Email OTP sent to:</p>
+              <p className="font-semibold mb-3" style={{ color:'#60a5fa' }}>
                 {otpModal.email}
               </p>
               <p className="text-slate-600 text-xs mb-5">
-                Ask <strong className="text-slate-400">{otpModal.name}</strong> to check their email and share the{' '}
-                {otpModal.step === 'phone' ? 'phone verification' : ''} OTP.
+                Ask <strong className="text-slate-400">{otpModal.name}</strong> to check their email and share the OTP.
               </p>
 
               <input type="text" maxLength={6} value={otpValue}
@@ -496,19 +452,15 @@ export default function ManageUsers() {
               )}
 
               <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-                onClick={otpModal.step === 'phone' ? handleVerifyPhoneOTP : handleVerifyOTP}
+                onClick={handleVerifyOTP}
                 disabled={otpLoading || otpValue.length !== 6}
                 className="w-full py-2.5 rounded-xl font-semibold text-white disabled:opacity-50 mb-2"
-                style={{ background: otpModal.step === 'phone' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #3b82f6, #1e40af)', boxShadow:'0 4px 20px rgba(59,130,246,0.3)' }}>
-                {otpLoading ? '⏳ Verifying...' : otpModal.step === 'phone' ? '📱 Verify Phone OTP' : '✅ Verify Email OTP'}
+                style={{ background:'linear-gradient(135deg, #3b82f6, #1e40af)', boxShadow:'0 4px 20px rgba(59,130,246,0.3)' }}>
+                {otpLoading ? '⏳ Verifying...' : '✅ Verify Email OTP'}
               </motion.button>
 
               <div className="flex gap-2">
                 <button onClick={handleResendOTP} className="flex-1 text-sm py-2 rounded-xl text-blue-400 hover:text-blue-300 transition" style={{ border:'1px solid rgba(59,130,246,0.2)' }}>🔄 Resend</button>
-                {otpModal.step === 'phone' && (
-                  <button onClick={() => { setOtpModal(prev => ({ ...prev, step:'email' })); setOtpValue(''); setOtpMsg(''); }}
-                    className="flex-1 text-sm py-2 rounded-xl text-slate-400 hover:text-slate-300 transition" style={{ border:'1px solid rgba(255,255,255,0.08)' }}>← Back</button>
-                )}
                 <button onClick={() => setOtpModal(null)} className="flex-1 text-sm py-2 rounded-xl text-slate-500 hover:text-slate-300 transition" style={{ border:'1px solid rgba(255,255,255,0.08)' }}>Cancel</button>
               </div>
             </motion.div>

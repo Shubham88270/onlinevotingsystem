@@ -36,6 +36,19 @@ export default function UserProfile() {
   const [otpValue,  setOtpValue]  = useState('');
   const [otpNewPw,  setOtpNewPw]  = useState('');
   const [otpLoading,setOtpLoading]= useState(false);
+  // Timers
+  const [otpExpiry,   setOtpExpiry]   = useState(0);  // seconds until OTP expires
+  const [resendCooldown, setResendCooldown] = useState(0); // seconds until resend allowed
+
+  // Countdown tick
+  useEffect(() => {
+    if (otpExpiry <= 0 && resendCooldown <= 0) return;
+    const t = setInterval(() => {
+      setOtpExpiry(s => Math.max(0, s - 1));
+      setResendCooldown(s => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [otpExpiry, resendCooldown]);
 
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : 'U';
@@ -90,8 +103,33 @@ export default function UserProfile() {
     setOtpLoading(true);
     try {
       const { data } = await api.post('/auth/forgot-password', { email:otpEmail });
-      setOtpUserId(data.userId); setOtpStep(2); toast.success(`OTP sent to ${otpEmail}`);
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+      setOtpUserId(data.userId);
+      setOtpStep(2);
+      setOtpExpiry(10 * 60);    // 10 min countdown
+      setResendCooldown(60);    // 1 min resend cooldown
+      toast.success(`OTP sent to ${otpEmail}`);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed';
+      const cd  = err.response?.data?.cooldown;
+      if (cd) setResendCooldown(cd);
+      toast.error(msg);
+    }
+    finally { setOtpLoading(false); }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    setOtpLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email: otpEmail });
+      setOtpExpiry(10 * 60);
+      setResendCooldown(60);
+      toast.success('OTP resent!');
+    } catch (err) {
+      const cd = err.response?.data?.cooldown;
+      if (cd) setResendCooldown(cd);
+      toast.error(err.response?.data?.message || 'Failed');
+    }
     finally { setOtpLoading(false); }
   };
 
@@ -308,7 +346,7 @@ export default function UserProfile() {
                   className="space-y-3">
                   {otpStep === 1 ? (
                     <>
-                      <p className="text-sm text-slate-500">OTP will be sent to your email.</p>
+                      <p className="text-sm text-slate-500">OTP will be sent to your email. Valid for <strong>10 minutes</strong>.</p>
                       <div>
                         <label className="text-xs text-slate-500 mb-1 block">Email</label>
                         <input type="email" value={otpEmail} onChange={e => setOtpEmail(e.target.value)}
@@ -330,7 +368,23 @@ export default function UserProfile() {
                     </>
                   ) : (
                     <>
-                      <p className="text-sm text-emerald-400">✅ OTP sent to {otpEmail}</p>
+                      {/* OTP expiry countdown */}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-emerald-400">✅ OTP sent to {otpEmail}</p>
+                        {otpExpiry > 0 ? (
+                          <span className="text-xs font-mono px-2 py-1 rounded-lg"
+                            style={{
+                              background: otpExpiry < 60 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.1)',
+                              color:      otpExpiry < 60 ? '#f87171' : '#6ee7b7',
+                              border:     `1px solid ${otpExpiry < 60 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.2)'}`,
+                            }}>
+                            ⏱ {Math.floor(otpExpiry / 60)}:{String(otpExpiry % 60).padStart(2,'0')}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-red-400 font-medium">⚠️ OTP expired</span>
+                        )}
+                      </div>
+
                       <div>
                         <label className="text-xs text-slate-500 mb-1 block">6-digit OTP</label>
                         <input type="text" maxLength={6} value={otpValue}
@@ -343,9 +397,28 @@ export default function UserProfile() {
                         <input type="password" value={otpNewPw} onChange={e => setOtpNewPw(e.target.value)}
                           placeholder="Min 6 characters" className={inputCls} style={inputStyle} />
                       </div>
+
+                      {/* Resend cooldown */}
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={handleResendOTP}
+                          disabled={resendCooldown > 0 || otpLoading}
+                          className="text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ color: resendCooldown > 0 ? '#475569' : '#f59e0b', background:'none', border:'none', cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer' }}>
+                          {resendCooldown > 0
+                            ? `🔄 Resend in ${resendCooldown}s`
+                            : '🔄 Resend OTP'}
+                        </button>
+                        <button onClick={() => { setOtpStep(1); setOtpValue(''); setOtpNewPw(''); setOtpExpiry(0); setResendCooldown(0); }}
+                          className="text-xs text-slate-500"
+                          style={{ background:'none', border:'none', cursor:'pointer' }}>
+                          ← Change email
+                        </button>
+                      </div>
+
                       <div className="flex gap-2">
                         <motion.button whileHover={{ scale:1.01 }} whileTap={{ scale:0.97 }}
-                          onClick={handleResetWithOTP} disabled={otpLoading}
+                          onClick={handleResetWithOTP} disabled={otpLoading || otpExpiry === 0}
                           className="flex-1 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
                           style={{ background:'linear-gradient(135deg,#6366f1,#4f46e5)' }}>
                           {otpLoading ? '⏳...' : '✅ Reset Password'}

@@ -29,10 +29,14 @@ app.use(cors({
   origin: function (origin, callback) {
     const allowed = [
       'http://localhost:3000',
+      'https://onlinevotingsystem-five.vercel.app',
+      'https://onlinevotingsystem-git-main-shubham88270s-projects.vercel.app',
+      'https://onlinevotingsystem-6d3u734nd-shubham88270s-projects.vercel.app',
       process.env.CLIENT_URL,
     ].filter(Boolean);
-    if (!origin) return callback(null, true); // Postman / server-to-server
+    if (!origin) return callback(null, true);
     if (allowed.includes(origin)) return callback(null, true);
+    console.warn(`CORS blocked origin: ${origin}`);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
@@ -43,7 +47,8 @@ app.use(express.json({ limit: '10mb' })); // 10mb for base64 photos
 app.use('/api/auth',      authRoutes);
 app.use('/api/elections', electionRoutes);
 app.use('/api/votes',     voteRoutes);
-app.get('/', (req, res) => res.json({ message: 'VoteApp API running ✅' }));
+app.get('/',         (req, res) => res.json({ message: 'VoteApp API running ✅' }));
+app.get('/api/test', (req, res) => res.json({ success: true, env: process.env.NODE_ENV, clientUrl: process.env.CLIENT_URL || 'not set' }));
 
 // Socket.io — users join election rooms for live updates
 io.on('connection', (socket) => {

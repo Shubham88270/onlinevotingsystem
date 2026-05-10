@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema(
     // OTP for admin-registered users
     otp:         { type: String,  default: null },
     otpExpiry:   { type: Date,    default: null },
+    otpResendAt: { type: Date,    default: null }, // cooldown: can resend after this time
+
+    // TTL: auto-delete unverified users after 10 minutes
+    // This field is only set for unverified users; cleared on verification
+    unverifiedExpiry: { type: Date, default: null, index: { expireAfterSeconds: 0 } },
   },
   { timestamps: true }
 );

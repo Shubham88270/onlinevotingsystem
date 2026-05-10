@@ -22,9 +22,19 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    const allowed = [
+      'http://localhost:3000',
+      process.env.CLIENT_URL,
+    ].filter(Boolean);
+    if (!origin) return callback(null, true); // Postman / server-to-server
+    if (allowed.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' })); // 10mb for base64 photos
@@ -83,11 +93,19 @@ setInterval(async () => {
 }, 60 * 1000); // every 60 seconds
 
 // Connect MongoDB & start server
+const PORT = process.env.PORT || 5000;
+
+// Start server FIRST so Render detects the open port immediately
+server.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
+
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected');
-    server.listen(process.env.PORT, () =>
-      console.log(`✅ Server running on http://localhost:${process.env.PORT}`)
-    );
-  })
-  .catch((err) => console.error('❌ DB error:', err));
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ DB connection failed:', err.message));
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received — shutting down gracefully');
+  server.close(() => process.exit(0));
+});

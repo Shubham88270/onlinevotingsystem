@@ -38,7 +38,6 @@ router.delete('/users/:id',         protect, adminOnly, ctrl.deleteUser);
 router.post('/admin/register-user', protect, adminOnly, ctrl.adminRegisterUser);
 router.post('/verify-otp',          ctrl.verifyOTP);
 router.post('/resend-otp',          ctrl.resendOTP);
-router.post('/verify-phone-otp',    ctrl.verifyPhoneOTP);
-router.post('/resend-phone-otp',    protect, adminOnly, ctrl.resendPhoneOTP);
+// phone OTP routes removed — SMS gateway not configured
 
 module.exports = router;

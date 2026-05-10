@@ -10,49 +10,11 @@ const generateToken = (id) =>
 
 const generateVerifyToken = () => crypto.randomBytes(32).toString('hex');
 
-// POST /api/auth/register
+// POST /api/auth/register — DISABLED: only admin can register users
 exports.register = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty())
-    return res.status(400).json({ message: errors.array()[0].msg });
-
-  try {
-    const { name, email, password, branch, college, university, rollNo } = req.body;
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'Email already registered' });
-
-    const verificationToken  = generateVerifyToken();
-    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    const user = await User.create({
-      name, email, password,
-      branch:     branch     || '',
-      college:    college    || '',
-      university: university || '',
-      rollNo:     rollNo     || '',
-      isVerified:  false,
-      isApproved:  false,
-      verificationToken,
-      verificationExpiry,
-    });
-
-    try { await sendVerificationEmail(email, name, verificationToken); } catch {}
-
-    // Notify admin — new voter registered
-    try {
-      const io = req.app.get('io');
-      if (io) io.to('admin').emit('adminNotification', {
-        icon:  '👤',
-        title: 'New voter registered',
-        desc:  `${name} (${email}) registered and needs approval.`,
-      });
-    } catch {}
-
-    res.status(201).json({
-      message: `Registration successful! Check your email to verify. Your Voter ID is: ${user.voterId}`,
-      voterId: user.voterId,
-    });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  return res.status(403).json({
+    message: 'Self-registration is disabled. Please contact your administrator to create an account.',
+  });
 };
 
 // POST /api/auth/login
@@ -112,7 +74,7 @@ exports.verifyEmail = async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
-// POST /api/auth/resend-verification
+// POST /api/auth/resend-verification — resend OTP (not email link)
 exports.resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
@@ -120,11 +82,29 @@ exports.resendVerification = async (req, res) => {
     if (!user)           return res.status(404).json({ message: 'Email not found' });
     if (user.isVerified) return res.status(400).json({ message: 'Already verified' });
 
-    user.verificationToken  = generateVerifyToken();
-    user.verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // 1 min cooldown
+    if (user.otpResendAt && new Date() < user.otpResendAt) {
+      const secondsLeft = Math.ceil((user.otpResendAt - Date.now()) / 1000);
+      return res.status(429).json({
+        message:  `Please wait ${secondsLeft} second(s) before resending.`,
+        cooldown: secondsLeft,
+      });
+    }
+
+    const { generateOTP, sendOTPEmail } = require('../utils/sendOTP');
+    const otp = generateOTP();
+    user.otp              = otp;
+    user.otpExpiry        = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpResendAt      = new Date(Date.now() +  1 * 60 * 1000);
+    user.unverifiedExpiry = new Date(Date.now() + 10 * 60 * 1000); // extend TTL
     await user.save();
-    await sendVerificationEmail(email, user.name, user.verificationToken);
-    res.json({ message: 'Verification email resent!' });
+
+    try { await sendOTPEmail(email, user.name, otp); } catch {}
+    res.json({
+      message:   `OTP sent to ${email}`,
+      userId:    user._id,
+      expiresIn: 10 * 60,
+    });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
@@ -219,14 +199,16 @@ exports.adminRegisterUser = async (req, res) => {
     if (phone && phone.trim()) {
       if (!/^\d{10}$/.test(phone.trim()))
         return res.status(400).json({ message: 'Phone number must be exactly 10 digits.' });
-      const phoneExists = await User.findOne({ phone: phone.trim() });
+      // Only block if the existing user with this phone is verified
+      const phoneExists = await User.findOne({ phone: phone.trim(), isVerified: true });
       if (phoneExists)
         return res.status(400).json({ message: `Phone number "${phone}" is already registered.` });
     }
 
     // ── Duplicate Roll No check ─────────────────────────────
     if (rollNo && rollNo.trim()) {
-      const rollExists = await User.findOne({ rollNo: rollNo.trim() });
+      // Only block if the existing user with this rollNo is verified
+      const rollExists = await User.findOne({ rollNo: rollNo.trim(), isVerified: true });
       if (rollExists)
         return res.status(400).json({ message: `Roll No "${rollNo}" is already registered.` });
     }
@@ -236,8 +218,17 @@ exports.adminRegisterUser = async (req, res) => {
       if (!exists.isVerified) {
         const { generateOTP, sendOTPEmail } = require('../utils/sendOTP');
         const otp = generateOTP();
-        exists.otp       = otp;
-        exists.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        // Update all fields in case admin is re-registering with new info
+        exists.name             = name;
+        exists.password         = password; // will be re-hashed by pre-save hook
+        exists.branch           = branch     || exists.branch;
+        exists.college          = college    || exists.college;
+        exists.university       = university || exists.university;
+        exists.rollNo           = rollNo     || exists.rollNo;
+        exists.phone            = phone      || exists.phone;
+        exists.otp              = otp;
+        exists.otpExpiry        = new Date(Date.now() + 10 * 60 * 1000);
+        exists.unverifiedExpiry = new Date(Date.now() + 10 * 60 * 1000);
         await exists.save();
         try { await sendOTPEmail(email, exists.name, otp); } catch {}
         return res.json({
@@ -263,7 +254,8 @@ exports.adminRegisterUser = async (req, res) => {
       isVerified: false,
       isApproved: false,
       otp,
-      otpExpiry: new Date(Date.now() + 10 * 60 * 1000),
+      otpExpiry:        new Date(Date.now() + 10 * 60 * 1000),
+      unverifiedExpiry: new Date(Date.now() + 10 * 60 * 1000), // TTL: auto-delete after 10 min
     });
 
     // Send email OTP
@@ -273,28 +265,12 @@ exports.adminRegisterUser = async (req, res) => {
       console.error('OTP email failed:', emailErr.message);
     }
 
-    // If phone provided, generate & store phone OTP (sent via email for now)
-    let phoneOtpSent = false;
-    if (phone && phone.trim()) {
-      const { generateOTP: genPhoneOTP } = require('../utils/sendOTP');
-      const phoneOtp = genPhoneOTP();
-      user.phoneOtp       = phoneOtp;
-      user.phoneOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-      await user.save();
-      // Send phone OTP via email (SMS gateway can replace this later)
-      try {
-        await sendOTPEmail(email, name, phoneOtp, true);
-        phoneOtpSent = true;
-      } catch {}
-    }
-
     res.status(201).json({
-      message:      `OTP sent to ${email}. Ask user to verify with OTP.`,
-      userId:       user._id,
-      voterId:      user.voterId,
-      requiresOTP:  true,
-      hasPhone:     !!(phone && phone.trim()),
-      phoneOtpSent,
+      message:     `OTP sent to ${email}. Ask user to verify with OTP.`,
+      userId:      user._id,
+      voterId:     user.voterId,
+      requiresOTP: true,
+      hasPhone:    false, // phone OTP disabled — SMS gateway not configured
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
@@ -316,10 +292,11 @@ exports.verifyOTP = async (req, res) => {
       return res.status(400).json({ message: 'OTP expired. Ask admin to resend.' });
 
     // OTP correct — verify and approve
-    user.isVerified = true;
-    user.isApproved = true;
-    user.otp        = null;
-    user.otpExpiry  = null;
+    user.isVerified       = true;
+    user.isApproved       = true;
+    user.otp              = null;
+    user.otpExpiry        = null;
+    user.unverifiedExpiry = null; // cancel TTL — user is now verified
     await user.save();
 
     res.json({
@@ -382,14 +359,28 @@ exports.resendOTP = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.isVerified) return res.status(400).json({ message: 'Already verified' });
 
+    // ── 1 min cooldown ──────────────────────────────────────
+    if (user.otpResendAt && new Date() < user.otpResendAt) {
+      const secondsLeft = Math.ceil((user.otpResendAt - Date.now()) / 1000);
+      return res.status(429).json({
+        message: `Please wait ${secondsLeft} second(s) before resending.`,
+        cooldown: secondsLeft,
+      });
+    }
+
     const { generateOTP, sendOTPEmail } = require('../utils/sendOTP');
     const otp = generateOTP();
-    user.otp       = otp;
-    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.otp              = otp;
+    user.otpExpiry        = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpResendAt      = new Date(Date.now() +  1 * 60 * 1000);
+    user.unverifiedExpiry = new Date(Date.now() + 10 * 60 * 1000); // extend TTL on resend
     await user.save();
 
     try { await sendOTPEmail(user.email, user.name, otp); } catch {}
-    res.json({ message: `OTP resent to ${user.email}` });
+    res.json({
+      message:   `OTP resent to ${user.email}`,
+      expiresIn: 10 * 60,
+    });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
@@ -445,10 +436,20 @@ exports.forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: 'Email not found' });
 
+    // ── 1 min resend cooldown ───────────────────────────────
+    if (user.otpResendAt && new Date() < user.otpResendAt) {
+      const secondsLeft = Math.ceil((user.otpResendAt - Date.now()) / 1000);
+      return res.status(429).json({
+        message: `Please wait ${secondsLeft} second(s) before requesting another OTP.`,
+        cooldown: secondsLeft,
+      });
+    }
+
     const { generateOTP, sendOTPEmail } = require('../utils/sendOTP');
     const otp = generateOTP();
-    user.otp       = otp;
-    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    user.otp         = otp;
+    user.otpExpiry   = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    user.otpResendAt = new Date(Date.now() +  1 * 60 * 1000); // 1 min cooldown
     await user.save();
 
     try {
@@ -457,7 +458,11 @@ exports.forgotPassword = async (req, res) => {
       console.error('OTP email failed:', e.message);
     }
 
-    res.json({ message: `OTP sent to ${email}`, userId: user._id });
+    res.json({
+      message:   `OTP sent to ${email}`,
+      userId:    user._id,
+      expiresIn: 10 * 60, // seconds
+    });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 

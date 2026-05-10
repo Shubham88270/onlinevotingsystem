@@ -1,10 +1,9 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config.js';
 
 // Use env variable in production, proxy in development
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL
-    ? `${process.env.REACT_APP_API_URL}/api`
-    : '/api',
+  baseURL: API_BASE_URL,
 });
 
 // Request — JWT token attach karo

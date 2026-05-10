@@ -1,7 +1,7 @@
 const express  = require('express');
 const { body } = require('express-validator');
 const ctrl     = require('../controllers/voteController');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 const validate    = require('../middleware/validate');
 const rateLimiter = require('../middleware/rateLimiter');
 
@@ -11,22 +11,28 @@ const voteRules = [
   body('electionId')
     .notEmpty().withMessage('Election ID is required')
     .isMongoId().withMessage('Invalid election ID'),
-
   body('candidateId')
     .notEmpty().withMessage('Candidate ID is required')
     .isMongoId().withMessage('Invalid candidate ID'),
 ];
 
-// Rate limit: 10 votes per hour (prevent spam)
+// Cast vote — authenticated + per-user rate limit
 router.post('/',
   protect,
-  rateLimiter(10, 60 * 60 * 1000),
+  rateLimiter(5, 60 * 60 * 1000), // 5 votes per hour per user
   voteRules, validate,
   ctrl.castVote);
 
+// Results — public (voters need to see results)
 router.get('/results/:electionId', ctrl.getResults);
-router.get('/blockchain',          protect, ctrl.getBlockchain);
-router.get('/audit',               protect, ctrl.getAuditLogs);
-router.get('/dashboard-stats',     protect, ctrl.getDashboardStats);
+
+// Blockchain — authenticated users only
+router.get('/blockchain', protect, ctrl.getBlockchain);
+
+// Audit logs — admin only
+router.get('/audit', protect, adminOnly, ctrl.getAuditLogs);
+
+// Dashboard stats — admin only
+router.get('/dashboard-stats', protect, adminOnly, ctrl.getDashboardStats);
 
 module.exports = router;

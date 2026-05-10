@@ -1,11 +1,21 @@
-// Simple in-memory rate limiter — brute force attacks rokta hai
+// Production-grade in-memory rate limiter with TTL cleanup
 const attempts = new Map();
+
+// Cleanup expired entries every 5 minutes to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, data] of attempts.entries()) {
+    if (now > data.resetAt) attempts.delete(key);
+  }
+}, 5 * 60 * 1000);
 
 const rateLimiter = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
   return (req, res, next) => {
-    const key  = req.ip + req.path;
-    const now  = Date.now();
-    const data = attempts.get(key) || { count: 0, resetAt: now + windowMs };
+    // Use user ID if authenticated, otherwise IP
+    const userId = req.user?._id?.toString();
+    const key    = (userId || req.ip) + req.path;
+    const now    = Date.now();
+    const data   = attempts.get(key) || { count: 0, resetAt: now + windowMs };
 
     // Reset window if expired
     if (now > data.resetAt) {

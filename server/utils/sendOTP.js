@@ -1,6 +1,10 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy init — env var available hoga jab function call hoga
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY not set in environment');
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -14,6 +18,7 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
     : 'Your admin has registered you on VoteApp. Use the OTP below to verify your identity:';
 
   try {
+    const resend = getResend();
     const { data, error } = await resend.emails.send({
       from:    'VoteApp <onboarding@resend.dev>',
       to:      toEmail,

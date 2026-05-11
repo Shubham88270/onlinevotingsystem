@@ -1,11 +1,16 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy init — env var available hoga jab function call hoga
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY not set in environment');
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 const sendVerificationEmail = async (toEmail, name, token) => {
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
   try {
+    const resend = getResend();
     const { data, error } = await resend.emails.send({
       from:    'VoteApp <onboarding@resend.dev>',
       to:      toEmail,

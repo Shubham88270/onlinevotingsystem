@@ -28,13 +28,15 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-// Allow all Vercel preview deployments for this project
+// Allow all Vercel preview deployments + Railway
 const vercelPreviewPattern = /^https:\/\/onlinevotingsystem(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
+const railwayPattern       = /^https:\/\/.*\.up\.railway\.app$/;
 
 const corsOrigin = (origin, callback) => {
   if (!origin) return callback(null, true); // Postman / server-to-server
   if (allowedOrigins.includes(origin)) return callback(null, true);
   if (vercelPreviewPattern.test(origin)) return callback(null, true);
+  if (railwayPattern.test(origin)) return callback(null, true);
   console.warn(`⚠️  CORS blocked origin: ${origin}`);
   callback(new Error(`CORS blocked: ${origin}`));
 };

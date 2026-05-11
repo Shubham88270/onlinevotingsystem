@@ -187,7 +187,11 @@ export default function AdminLayout() {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-5">
+        <main className="flex-1 overflow-y-auto p-5"
+          style={{
+            fontSize:   `var(--font-size-base, 15px)`,
+            fontFamily: `var(--font-family, 'Inter', sans-serif)`,
+          }}>
           <motion.div
             key={window.location.pathname}
             initial={{ opacity: 0, y: 10 }}

@@ -18,7 +18,7 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const { user, logout } = useAuth();
-  const { darkMode } = useTheme();
+  const { darkMode, currentTheme } = useTheme();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -35,9 +35,9 @@ export default function AdminSidebar() {
       className="h-screen flex flex-col overflow-hidden flex-shrink-0"
       style={{
         background:  darkMode
-          ? 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+          ? `linear-gradient(180deg, #0f172a 0%, ${currentTheme?.primary}22 50%, #0f172a 100%)`
           : 'linear-gradient(180deg, #ffffff 0%, #f0f4ff 50%, #ffffff 100%)',
-        borderRight: darkMode ? '1px solid rgba(99,102,241,0.15)' : '1px solid rgba(99,102,241,0.2)',
+        borderRight: darkMode ? `1px solid ${currentTheme?.primary}30` : '1px solid rgba(99,102,241,0.2)',
         transition:  'background 0.4s ease',
       }}>
 
@@ -106,10 +106,10 @@ export default function AdminSidebar() {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden`}
                 style={isActive ? {
                   background: darkMode
-                    ? 'linear-gradient(90deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05))'
-                    : 'linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02))',
-                  borderLeft: '2px solid #3b82f6',
-                  boxShadow:  'inset 0 0 20px rgba(59,130,246,0.08)',
+                    ? `linear-gradient(90deg, ${currentTheme?.primary}33, ${currentTheme?.primary}0a)`
+                    : `linear-gradient(90deg, ${currentTheme?.primary}20, ${currentTheme?.primary}05)`,
+                  borderLeft: `2px solid ${currentTheme?.primary}`,
+                  boxShadow:  `inset 0 0 20px ${currentTheme?.primary}15`,
                   color: darkMode ? '#fff' : '#1d4ed8',
                 } : { color: darkMode ? '#94a3b8' : '#64748b' }}>
 

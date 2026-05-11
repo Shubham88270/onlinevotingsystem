@@ -115,7 +115,11 @@ export default function UserLayout() {
         </div>
 
         {/* Page content with route transition */}
-        <main className="flex-1 overflow-y-auto p-5">
+        <main className="flex-1 overflow-y-auto p-5"
+          style={{
+            fontSize:   `var(--font-size-base, 15px)`,
+            fontFamily: `var(--font-family, 'Inter', sans-serif)`,
+          }}>
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 12 }}

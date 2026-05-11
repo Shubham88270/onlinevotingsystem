@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../../api/axios.jsx';
@@ -38,10 +38,24 @@ export default function ManageUsers() {
   const [rows,       setRows]       = useState([emptyUser()]);
   const [regLoading, setRegLoading] = useState(false);
   const [tab,        setTab]        = useState('all');
-  const [otpModal,   setOtpModal]   = useState(null);  // { userId, email, name, hasPhone, step:'email'|'phone' }
+  const [otpModal,   setOtpModal]   = useState(null);  // { userId, email, name }
   const [otpValue,   setOtpValue]   = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpMsg,     setOtpMsg]     = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef(null);
+
+  // Start 60s cooldown timer
+  const startCooldown = () => {
+    setResendCooldown(60);
+    clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const fetchUsers = () => {
     setLoading(true);
@@ -106,6 +120,7 @@ export default function ManageUsers() {
         if (data.requiresOTP) {
           setOtpModal({ userId:data.userId, email:r.email, name:r.name });
           setOtpValue(''); setOtpMsg('');
+          startCooldown(); // start 1 min cooldown on first send
         }
       } catch (err) { toast.error(`${r.email}: ${err.response?.data?.message || 'Error'}`); }
     }
@@ -125,10 +140,16 @@ export default function ManageUsers() {
   };
 
   const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
     try {
       await api.post('/auth/resend-otp', { userId:otpModal.userId });
       setOtpMsg('✅ OTP resent to email!');
-    } catch (err) { setOtpMsg(err.response?.data?.message || 'Failed'); }
+      startCooldown();
+    } catch (err) {
+      const cd = err.response?.data?.cooldown;
+      if (cd) { setResendCooldown(cd); startCooldown(); }
+      setOtpMsg(err.response?.data?.message || 'Failed');
+    }
   };
 
   if (loading) return <Spinner />;
@@ -460,8 +481,14 @@ export default function ManageUsers() {
               </motion.button>
 
               <div className="flex gap-2">
-                <button onClick={handleResendOTP} className="flex-1 text-sm py-2 rounded-xl text-blue-400 hover:text-blue-300 transition" style={{ border:'1px solid rgba(59,130,246,0.2)' }}>🔄 Resend</button>
-                <button onClick={() => setOtpModal(null)} className="flex-1 text-sm py-2 rounded-xl text-slate-500 hover:text-slate-300 transition" style={{ border:'1px solid rgba(255,255,255,0.08)' }}>Cancel</button>
+                <button
+                  onClick={handleResendOTP}
+                  disabled={resendCooldown > 0}
+                  className="flex-1 text-sm py-2 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ border:`1px solid rgba(59,130,246,0.2)`, color: resendCooldown > 0 ? '#475569' : '#60a5fa' }}>
+                  {resendCooldown > 0 ? `🔄 Resend in ${resendCooldown}s` : '🔄 Resend'}
+                </button>
+                <button onClick={() => { setOtpModal(null); setOtpValue(''); setResendCooldown(0); clearInterval(cooldownRef.current); }} className="flex-1 text-sm py-2 rounded-xl text-slate-500 hover:text-slate-300 transition" style={{ border:'1px solid rgba(255,255,255,0.08)' }}>Cancel</button>
               </div>
             </motion.div>
           </motion.div>

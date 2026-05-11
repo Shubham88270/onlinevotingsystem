@@ -168,8 +168,8 @@ export default function AdminDashboard() {
         api.get('/auth/users'),
         api.get('/votes/dashboard-stats'),
       ]);
-      const elecs   = elRes.data;
-      const usrs    = usrRes.data;
+      const elecs   = Array.isArray(elRes.data) ? elRes.data : (elRes.data?.elections || []);
+      const usrs    = Array.isArray(usrRes.data) ? usrRes.data : [];
       const ds      = statsRes.data;
 
       setStats({

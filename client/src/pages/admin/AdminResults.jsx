@@ -79,8 +79,8 @@ function ElectionDashboard({ election, r, idx }) {
   const [sortBy,     setSortBy]     = useState('votes'); // votes | name
   const [expanded,   setExpanded]   = useState(idx === 0);
 
-  const winner = r.results[0];
-  const totalVoters = r.totalVotes; // use as proxy; real total voters not in API
+  const winner = !election.isActive ? r.results[0] : null; // winner only when closed
+  const leading = election.isActive ? r.results[0] : null; // leading candidate during live
 
   const filtered = useMemo(() => {
     let list = [...r.results];
@@ -170,8 +170,14 @@ function ElectionDashboard({ election, r, idx }) {
         <div className="flex items-center gap-6 mt-3 flex-wrap">
           <span className="text-sm text-slate-400">🗳️ <strong className="text-white">{r.totalVotes}</strong> votes cast</span>
           <span className="text-sm text-slate-400">👥 <strong className="text-white">{r.results.length}</strong> candidates</span>
-          {winMargin !== null && r.totalVotes > 0 && (
+          {!election.isActive && winMargin !== null && r.totalVotes > 0 && (
             <span className="text-sm text-slate-400">📈 Winning margin: <strong className="text-amber-400">{winMargin}</strong></span>
+          )}
+          {election.isActive && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{ background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.2)', color:'#fcd34d' }}>
+              🔒 Winner hidden until election closes
+            </span>
           )}
         </div>
       </div>
@@ -185,8 +191,8 @@ function ElectionDashboard({ election, r, idx }) {
             style={{ overflow:'hidden' }}>
             <div className="p-6 space-y-6">
 
-              {/* ── Winner Banner ── */}
-              {r.totalVotes > 0 && winner && (
+              {/* ── Winner Banner — only when election is CLOSED ── */}
+              {!election.isActive && r.totalVotes > 0 && winner && (
                 <motion.div initial={{ opacity:0, scale:0.96 }} animate={{ opacity:1, scale:1 }}
                   transition={{ delay:0.15 }}
                   className="relative overflow-hidden rounded-2xl p-5 flex items-center gap-5"
@@ -223,7 +229,28 @@ function ElectionDashboard({ election, r, idx }) {
                 </motion.div>
               )}
 
-              {r.totalVotes === 0 && (
+              {/* ── Live — Leading candidate (no winner declared) ── */}
+              {election.isActive && r.totalVotes > 0 && leading && (
+                <motion.div initial={{ opacity:0, scale:0.96 }} animate={{ opacity:1, scale:1 }}
+                  transition={{ delay:0.15 }}
+                  className="relative overflow-hidden rounded-2xl p-4 flex items-center gap-4"
+                  style={{
+                    background:'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.05))',
+                    border:'1px solid rgba(16,185,129,0.25)',
+                  }}>
+                  <motion.span animate={{ scale:[1,1.2,1] }} transition={{ repeat:Infinity, duration:1.5 }}
+                    className="text-3xl flex-shrink-0">📊</motion.span>
+                  <div>
+                    <p className="text-xs text-emerald-400/70 font-medium uppercase tracking-wider">Currently Leading</p>
+                    <p className="text-lg font-bold text-white">{leading.name}</p>
+                    <p className="text-sm text-emerald-300/70">{leading.votes} votes · {leading.percentage}%</p>
+                  </div>
+                  <div className="ml-auto text-right">
+                    <p className="text-xs text-slate-500">Winner declared after</p>
+                    <p className="text-xs text-slate-400">election closes 🔒</p>
+                  </div>
+                </motion.div>
+              )}
                 <div className="text-center py-10 text-slate-600">
                   <p className="text-4xl mb-3">📊</p>
                   <p className="text-sm">No votes cast yet.</p>
@@ -286,7 +313,7 @@ function ElectionDashboard({ election, r, idx }) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <AnimatePresence>
                         {filtered.map((c, i) => {
-                          const isWinner = c._id === winner?._id && r.totalVotes > 0;
+                          const isWinner = !election.isActive && c._id === winner?._id && r.totalVotes > 0;
                           const rank = r.results.findIndex(x => x._id === c._id);
                           const rankColors = ['#f59e0b','#94a3b8','#cd7c2f'];
                           const rankEmoji  = ['🥇','🥈','🥉'];

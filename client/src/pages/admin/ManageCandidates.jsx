@@ -16,7 +16,7 @@ export default function ManageCandidates() {
 
   const fetchElections = () => {
     setLoading(true);
-    api.get('/elections').then(({ data }) => setElections(data)).catch(() => {}).finally(() => setLoading(false));
+    api.get('/elections').then(({ data }) => setElections(Array.isArray(data) ? data : [])).catch(() => {}).finally(() => setLoading(false));
   };
   useEffect(() => { fetchElections(); }, []);
 

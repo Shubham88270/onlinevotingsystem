@@ -421,10 +421,11 @@ export default function AdminResults() {
     const init = async () => {
       try {
         const { data: elecs } = await api.get('/elections');
-        setElections(elecs);
-        await loadResults(elecs);
+        const safeElecs = Array.isArray(elecs) ? elecs : [];
+        setElections(safeElecs);
+        await loadResults(safeElecs);
         socket.connect();
-        elecs.forEach(e => socket.emit('joinElection', e._id));
+        safeElecs.forEach(e => socket.emit('joinElection', e._id));
       } catch { setError('Failed to load results'); }
       finally { setLoading(false); }
     };

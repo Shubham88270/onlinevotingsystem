@@ -10,7 +10,7 @@ export default function VotesMonitoring() {
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
-    api.get('/elections').then(({ data }) => setElections(data)).finally(() => setLoading(false));
+    api.get('/elections').then(({ data }) => setElections(Array.isArray(data) ? data : [])).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <Spinner />;

@@ -59,7 +59,7 @@ export default function ManageUsers() {
 
   const fetchUsers = () => {
     setLoading(true);
-    api.get('/auth/users').then(({ data }) => setUsers(data)).catch(() => toast.error('Failed')).finally(() => setLoading(false));
+    api.get('/auth/users').then(({ data }) => setUsers(Array.isArray(data) ? data : [])).catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
   useEffect(() => { fetchUsers(); }, []);
 

@@ -1,4 +1,6 @@
-const SibApiV3Sdk = require('@getbrevo/brevo');
+const { BrevoClient } = require('@getbrevo/brevo');
+
+const getClient = () => new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -12,32 +14,27 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
     : 'Your admin has registered you on VoteApp. Use the OTP below to verify your identity:';
 
   try {
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    apiInstance.authentications = {
-      'api-key': { type: 'apiKey', in: 'header', name: 'api-key', apiKey: process.env.BREVO_API_KEY }
-    };
-
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    sendSmtpEmail.sender      = { name: 'VoteApp', email: process.env.EMAIL_USER };
-    sendSmtpEmail.to          = [{ email: toEmail, name }];
-    sendSmtpEmail.subject     = subject;
-    sendSmtpEmail.htmlContent = `
-      <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:30px;border:1px solid #e5e7eb;border-radius:12px;">
-        <h2 style="color:#4f46e5;text-align:center;">🗳️ VoteApp</h2>
-        <h3 style="color:#1f2937;">Hello, ${name}!</h3>
-        <h4 style="color:#4f46e5;">${heading}</h4>
-        <p style="color:#6b7280;">${desc}</p>
-        <div style="text-align:center;margin:30px 0;">
-          <div style="background:#f0f4ff;border:2px dashed #6366f1;border-radius:12px;padding:20px;display:inline-block;">
-            <p style="margin:0;font-size:36px;font-weight:bold;letter-spacing:10px;color:#4f46e5;">${otp}</p>
+    const brevo = getClient();
+    await brevo.transactionalEmails.sendTransacEmail({
+      sender:      { name: 'VoteApp', email: process.env.EMAIL_USER },
+      to:          [{ email: toEmail, name }],
+      subject,
+      htmlContent: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:30px;border:1px solid #e5e7eb;border-radius:12px;">
+          <h2 style="color:#4f46e5;text-align:center;">🗳️ VoteApp</h2>
+          <h3 style="color:#1f2937;">Hello, ${name}!</h3>
+          <h4 style="color:#4f46e5;">${heading}</h4>
+          <p style="color:#6b7280;">${desc}</p>
+          <div style="text-align:center;margin:30px 0;">
+            <div style="background:#f0f4ff;border:2px dashed #6366f1;border-radius:12px;padding:20px;display:inline-block;">
+              <p style="margin:0;font-size:36px;font-weight:bold;letter-spacing:10px;color:#4f46e5;">${otp}</p>
+            </div>
           </div>
+          <p style="color:#6b7280;text-align:center;">This OTP expires in <strong>10 minutes</strong>.</p>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not expect this, please ignore.</p>
         </div>
-        <p style="color:#6b7280;text-align:center;">This OTP expires in <strong>10 minutes</strong>.</p>
-        <p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not expect this, please ignore.</p>
-      </div>
-    `;
-
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+      `,
+    });
     console.log(`✅ OTP email sent to ${toEmail}`);
   } catch (err) {
     console.error(`❌ OTP email failed to ${toEmail}:`, err.message);

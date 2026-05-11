@@ -25,14 +25,16 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'https://onlinevotingsystem-five.vercel.app',
-  'https://onlinevotingsystem-git-main-shubham88270s-projects.vercel.app',
-  'https://onlinevotingsystem-6d3u734nd-shubham88270s-projects.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
+
+// Allow all Vercel preview deployments for this project
+const vercelPreviewPattern = /^https:\/\/onlinevotingsystem(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
 
 const corsOrigin = (origin, callback) => {
   if (!origin) return callback(null, true); // Postman / server-to-server
   if (allowedOrigins.includes(origin)) return callback(null, true);
+  if (vercelPreviewPattern.test(origin)) return callback(null, true);
   console.warn(`⚠️  CORS blocked origin: ${origin}`);
   callback(new Error(`CORS blocked: ${origin}`));
 };

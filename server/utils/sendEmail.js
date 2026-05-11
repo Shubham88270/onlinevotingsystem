@@ -1,20 +1,13 @@
 const nodemailer = require('nodemailer');
-const dns        = require('dns');
 
-// ── Force IPv4 DNS resolution (Render free tier fix) ──────
-dns.setDefaultResultOrder('ipv4first');
-
-// ── Transporter ───────────────────────────────────────────
+// ── Transporter — Brevo SMTP (port 465 SSL) ───────────────
 const transporter = nodemailer.createTransport({
-  host:   'smtp.gmail.com',
-  port:   587,
-  secure: false,
+  host:   'smtp-relay.brevo.com',
+  port:   465,
+  secure: true, // SSL
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: true,
+    pass: process.env.EMAIL_PASS, // Brevo SMTP key
   },
 });
 

@@ -1,30 +1,20 @@
 const nodemailer = require('nodemailer');
-const dns        = require('dns');
 
-// ── Force Node.js to resolve DNS using IPv4 only ──────────
-// Render free tier blocks IPv6 outbound. Gmail's DNS returns
-// IPv6 addresses (2404:6800:...) which cause ENETUNREACH.
-// This forces ALL DNS lookups in this process to use IPv4.
-dns.setDefaultResultOrder('ipv4first');
-
-// ── Transporter ───────────────────────────────────────────
+// ── Transporter — Brevo SMTP (port 465 SSL) ───────────────
 const transporter = nodemailer.createTransport({
-  host:   'smtp.gmail.com',
-  port:   587,
-  secure: false, // STARTTLS on port 587
+  host:   'smtp-relay.brevo.com',
+  port:   465,
+  secure: true, // SSL
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Gmail App Password (16 chars, no spaces)
-  },
-  tls: {
-    rejectUnauthorized: true,
+    pass: process.env.EMAIL_PASS, // Brevo SMTP key
   },
 });
 
 // ── Verify connection on startup ──────────────────────────
 transporter.verify((err) => {
   if (err) console.error('❌ SMTP connection failed:', err.message);
-  else     console.log('✅ SMTP transporter ready (Gmail IPv4)');
+  else     console.log('✅ SMTP transporter ready (Brevo)');
 });
 
 // ── Helpers ───────────────────────────────────────────────
@@ -63,7 +53,7 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
     console.log(`✅ OTP email sent to ${toEmail} — MessageId: ${info.messageId}`);
   } catch (err) {
     console.error(`❌ OTP email failed to ${toEmail}:`, err.message);
-    throw err; // re-throw so caller can handle
+    throw err;
   }
 };
 

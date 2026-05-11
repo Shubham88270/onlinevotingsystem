@@ -43,7 +43,17 @@ const corsOrigin = (origin, callback) => {
 
 // ── Socket.io setup ───────────────────────────────────────
 const io = new Server(server, {
-  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true }
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (vercelPreviewPattern.test(origin)) return callback(null, true);
+      if (railwayPattern.test(origin)) return callback(null, true);
+      callback(new Error(`Socket CORS blocked: ${origin}`));
+    },
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
 
 app.set('io', io);

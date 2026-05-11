@@ -1,21 +1,21 @@
-const { Resend } = require('resend');
+const Brevo = require('@getbrevo/brevo');
 
-// Lazy init — env var available hoga jab function call hoga
-const getResend = () => {
-  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY not set in environment');
-  return new Resend(process.env.RESEND_API_KEY);
+const getClient = () => {
+  const client = Brevo.ApiClient.instance;
+  client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+  return new Brevo.TransactionalEmailsApi();
 };
 
 const sendVerificationEmail = async (toEmail, name, token) => {
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
   try {
-    const resend = getResend();
-    const { data, error } = await resend.emails.send({
-      from:    'VoteApp <onboarding@resend.dev>',
-      to:      toEmail,
+    const api = getClient();
+    await api.sendTransacEmail({
+      sender:  { name: 'VoteApp', email: process.env.EMAIL_USER },
+      to:      [{ email: toEmail, name }],
       subject: '✅ Verify Your Email — VoteApp',
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:30px;border:1px solid #e5e7eb;border-radius:12px;">
           <h2 style="color:#4f46e5;text-align:center;">🗳️ VoteApp</h2>
           <h3 style="color:#1f2937;">Hello, ${name}!</h3>
@@ -29,18 +29,10 @@ const sendVerificationEmail = async (toEmail, name, token) => {
           <p style="color:#9ca3af;font-size:12px;text-align:center;">
             This link expires in 24 hours. If you did not register, ignore this email.
           </p>
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
-          <p style="color:#9ca3af;font-size:11px;text-align:center;">VoteApp — Secure Online Voting System</p>
         </div>
       `,
     });
-
-    if (error) {
-      console.error(`❌ Verification email failed to ${toEmail}:`, error.message);
-      throw new Error(error.message);
-    }
-
-    console.log(`✅ Verification email sent to ${toEmail} — ID: ${data.id}`);
+    console.log(`✅ Verification email sent to ${toEmail}`);
   } catch (err) {
     console.error(`❌ Verification email failed to ${toEmail}:`, err.message);
     throw err;

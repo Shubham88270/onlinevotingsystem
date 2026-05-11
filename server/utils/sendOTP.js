@@ -1,23 +1,7 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// ── Transporter — Brevo SMTP (port 465 SSL) ───────────────
-const transporter = nodemailer.createTransport({
-  host:   'smtp-relay.brevo.com',
-  port:   465,
-  secure: true, // SSL
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Brevo SMTP key
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ── Verify connection on startup ──────────────────────────
-transporter.verify((err) => {
-  if (err) console.error('❌ SMTP connection failed:', err.message);
-  else     console.log('✅ SMTP transporter ready (Brevo)');
-});
-
-// ── Helpers ───────────────────────────────────────────────
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
@@ -30,8 +14,8 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
     : 'Your admin has registered you on VoteApp. Use the OTP below to verify your identity:';
 
   try {
-    const info = await transporter.sendMail({
-      from:    `"VoteApp" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from:    'VoteApp <onboarding@resend.dev>',
       to:      toEmail,
       subject,
       html: `
@@ -50,7 +34,13 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
         </div>
       `,
     });
-    console.log(`✅ OTP email sent to ${toEmail} — MessageId: ${info.messageId}`);
+
+    if (error) {
+      console.error(`❌ OTP email failed to ${toEmail}:`, error.message);
+      throw new Error(error.message);
+    }
+
+    console.log(`✅ OTP email sent to ${toEmail} — ID: ${data.id}`);
   } catch (err) {
     console.error(`❌ OTP email failed to ${toEmail}:`, err.message);
     throw err;

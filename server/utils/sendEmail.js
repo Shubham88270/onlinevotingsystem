@@ -1,22 +1,13 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// ── Transporter — Brevo SMTP (port 465 SSL) ───────────────
-const transporter = nodemailer.createTransport({
-  host:   'smtp-relay.brevo.com',
-  port:   465,
-  secure: true, // SSL
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Brevo SMTP key
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendVerificationEmail = async (toEmail, name, token) => {
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
   try {
-    const info = await transporter.sendMail({
-      from:    `"VoteApp" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from:    'VoteApp <onboarding@resend.dev>',
       to:      toEmail,
       subject: '✅ Verify Your Email — VoteApp',
       html: `
@@ -38,7 +29,13 @@ const sendVerificationEmail = async (toEmail, name, token) => {
         </div>
       `,
     });
-    console.log(`✅ Verification email sent to ${toEmail} — MessageId: ${info.messageId}`);
+
+    if (error) {
+      console.error(`❌ Verification email failed to ${toEmail}:`, error.message);
+      throw new Error(error.message);
+    }
+
+    console.log(`✅ Verification email sent to ${toEmail} — ID: ${data.id}`);
   } catch (err) {
     console.error(`❌ Verification email failed to ${toEmail}:`, err.message);
     throw err;

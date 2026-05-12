@@ -318,70 +318,66 @@ export default function UserResults() {
 
                 {r.totalVotes > 0 && (
                   <>
-                    {/* ── Side-by-side: Chart + Leaderboard ── */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-                      {/* Chart */}
-                      <div className="rounded-2xl p-5"
-                        style={{ background:'rgba(8,12,28,0.7)', border:'1px solid rgba(255,255,255,0.06)' }}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-sm font-semibold text-slate-300">Vote Distribution</h3>
-                          <div className="flex gap-1 p-0.5 rounded-lg"
-                            style={{ background:'rgba(255,255,255,0.05)' }}>
-                            {[['bar','📊'],['pie','🥧']].map(([t,icon]) => (
-                              <button key={t} onClick={() => setChartType(t)}
-                                className="text-xs px-2.5 py-1 rounded-md transition"
-                                style={chartType===t
-                                  ? { background:'rgba(99,102,241,0.3)', color:'#a5b4fc' }
-                                  : { color:'#475569' }}>
-                                {icon}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{ height:220 }}>
-                          {chartType==='bar'
-                            ? <Bar  data={chartData} options={chartOpts} />
-                            : <Pie  data={chartData} options={chartOpts} />}
+                    {/* ── Chart (full width, toggle bar/pie) ── */}
+                    <div className="rounded-2xl p-5"
+                      style={{ background:'rgba(8,12,28,0.7)', border:'1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-300">Vote Distribution</h3>
+                        <div className="flex gap-1 p-0.5 rounded-lg"
+                          style={{ background:'rgba(255,255,255,0.05)' }}>
+                          {[['bar','📊 Bar'],['pie','🥧 Pie']].map(([t,icon]) => (
+                            <button key={t} onClick={() => setChartType(t)}
+                              className="text-xs px-3 py-1.5 rounded-md transition font-medium"
+                              style={chartType===t
+                                ? { background:'rgba(99,102,241,0.3)', color:'#a5b4fc', border:'1px solid rgba(99,102,241,0.4)' }
+                                : { color:'#475569' }}>
+                              {icon}
+                            </button>
+                          ))}
                         </div>
                       </div>
+                      <div style={{ height:240 }}>
+                        {chartType==='bar'
+                          ? <Bar  data={chartData} options={chartOpts} />
+                          : <Pie  data={chartData} options={chartOpts} />}
+                      </div>
+                    </div>
 
-                      {/* Leaderboard */}
-                      <div className="rounded-2xl p-5"
-                        style={{ background:'rgba(8,12,28,0.7)', border:'1px solid rgba(255,255,255,0.06)' }}>
-                        <h3 className="text-sm font-semibold text-slate-300 mb-4">🏅 Leaderboard</h3>
-                        <div className="space-y-2.5">
-                          {r.results.map((c, i) => {
-                            const isWin = !election.isActive && i === 0;
-                            const rankEmoji = ['🥇','🥈','🥉'];
-                            return (
-                              <motion.div key={c._id}
-                                initial={{ opacity:0, x:10 }} animate={{ opacity:1, x:0 }}
-                                transition={{ delay:i*0.06 }}
-                                whileHover={{ x:3 }}
-                                className="flex items-center gap-3 p-3 rounded-xl transition-all"
-                                style={{
-                                  background: isWin ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)',
-                                  border: isWin ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.05)',
-                                }}>
-                                <span className="text-lg flex-shrink-0 w-7 text-center">
-                                  {i < 3 ? rankEmoji[i] : <span className="text-xs text-slate-500 font-bold">#{i+1}</span>}
-                                </span>
-                                <CandidateAvatar name={c.name} photo={c.photo} size={36} color={COLORS[i%COLORS.length]} isWinner={isWin} />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-slate-200 truncate">{c.name}</p>
-                                  {c.appliedPost && <p className="text-xs text-slate-600 truncate">{c.appliedPost}</p>}
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                  <p className="text-sm font-bold" style={{ color: COLORS[i%COLORS.length] }}>{c.percentage}%</p>
-                                  <p className="text-xs text-slate-600">{c.votes} votes</p>
-                                </div>
-                              </motion.div>
-                            );
+                    {/* ── Leaderboard (full width, below chart) ── */}
+                    <div className="rounded-2xl p-5"
+                      style={{ background:'rgba(8,12,28,0.7)', border:'1px solid rgba(255,255,255,0.06)' }}>
+                      <h3 className="text-sm font-semibold text-slate-300 mb-4">🏅 Leaderboard</h3>
+                      <div className="space-y-2.5">
+                        {r.results.map((c, i) => {
+                          const isWin = !election.isActive && i === 0;
+                          const rankEmoji = ['🥇','🥈','🥉'];
+                          return (
+                            <motion.div key={c._id}
+                              initial={{ opacity:0, x:10 }} animate={{ opacity:1, x:0 }}
+                              transition={{ delay:i*0.06 }}
+                              whileHover={{ x:3 }}
+                              className="flex items-center gap-3 p-3 rounded-xl transition-all"
+                              style={{
+                                background: isWin ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)',
+                                border: isWin ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.05)',
+                              }}>
+                              <span className="text-lg flex-shrink-0 w-7 text-center">
+                                {i < 3 ? rankEmoji[i] : <span className="text-xs text-slate-500 font-bold">#{i+1}</span>}
+                              </span>
+                              <CandidateAvatar name={c.name} photo={c.photo} size={36} color={COLORS[i%COLORS.length]} isWinner={isWin} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-200 truncate">{c.name}</p>
+                                {c.appliedPost && <p className="text-xs text-slate-600 truncate">{c.appliedPost}</p>}
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-sm font-bold" style={{ color: COLORS[i%COLORS.length] }}>{c.percentage}%</p>
+                                <p className="text-xs text-slate-600">{c.votes} votes</p>
+                              </div>
+                            </motion.div>
+                          );
                           })}
                         </div>
                       </div>
-                    </div>
 
                     {/* ── Candidate Progress Cards ── */}
                     <div>

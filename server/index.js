@@ -25,11 +25,12 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'https://onlinevotingsystem-five.vercel.app',
+  'https://smartvoteclg.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
 // Allow all Vercel preview deployments + Railway
-const vercelPreviewPattern = /^https:\/\/onlinevotingsystem(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
+const vercelPreviewPattern = /^https:\/\/(onlinevotingsystem|smartvoteclg)(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
 const railwayPattern       = /^https:\/\/.*\.up\.railway\.app$/;
 
 const corsOrigin = (origin, callback) => {

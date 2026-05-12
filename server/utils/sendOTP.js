@@ -1,6 +1,6 @@
-const { Resend } = require('resend');
+const { BrevoClient } = require('@getbrevo/brevo');
 
-const getResend = () => new Resend(process.env.RESEND_API_KEY);
+const getClient = () => new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -14,12 +14,12 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
     : 'Your admin has registered you on VoteApp. Use the OTP below to verify your identity:';
 
   try {
-    const resend = getResend();
-    const { data, error } = await resend.emails.send({
-      from:    'VoteApp <onboarding@resend.dev>',
-      to:      [toEmail],
+    const brevo = getClient();
+    await brevo.transactionalEmails.sendTransacEmail({
+      sender:      { name: 'VoteApp', email: process.env.EMAIL_USER },
+      to:          [{ email: toEmail, name }],
       subject,
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:30px;border:1px solid #e5e7eb;border-radius:12px;">
           <h2 style="color:#4f46e5;text-align:center;">🗳️ VoteApp</h2>
           <h3 style="color:#1f2937;">Hello, ${name}!</h3>
@@ -35,9 +35,7 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
         </div>
       `,
     });
-
-    if (error) throw new Error(error.message);
-    console.log(`✅ OTP email sent to ${toEmail} — ID: ${data.id}`);
+    console.log(`✅ OTP email sent to ${toEmail}`);
   } catch (err) {
     console.error(`❌ OTP email failed to ${toEmail}:`, err.message);
     throw err;

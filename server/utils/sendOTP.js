@@ -16,7 +16,7 @@ const sendOTPEmail = async (toEmail, name, otp, isPhone = false) => {
   try {
     const resend = getResend();
     const { data, error } = await resend.emails.send({
-      from:    'VoteApp <onboarding@resend.dev>',
+      from:    'VoteApp <noreply@voteconst.app>',
       to:      [toEmail],
       subject,
       html: `

@@ -17,18 +17,18 @@ export default function UserSidebar() {
   const { user, logout } = useAuth();
   const { darkMode, currentTheme } = useTheme();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [pinned,  setPinned]  = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const collapsed = !pinned && !hovered;
 
   const handleLogout = () => { logout(); navigate('/'); };
 
-  const initials = user?.name
-    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
-
   return (
     <motion.aside
-      animate={{ width: collapsed ? 72 : 240 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      animate={{ width: collapsed ? 68 : 240 }}
+      transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="h-screen flex flex-col overflow-hidden flex-shrink-0 sidebar-3d"
       style={{
         background:   darkMode
@@ -55,11 +55,24 @@ export default function UserSidebar() {
             </motion.div>
           )}
         </AnimatePresence>
-        <motion.button whileHover={{ scale:1.1 }} whileTap={{ scale:0.9 }}
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 flex-shrink-0">
-          <motion.span animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration:0.3 }}>◀</motion.span>
-        </motion.button>
+        {/* Pin button */}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.button
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+              onClick={() => setPinned(p => !p)}
+              title={pinned ? 'Unpin sidebar' : 'Pin sidebar open'}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-colors flex-shrink-0"
+              style={{
+                background: pinned ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
+                border: pinned ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: pinned ? '#a5b4fc' : '#64748b',
+              }}>
+              {pinned ? '📌' : '📍'}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* User card */}
@@ -93,11 +106,15 @@ export default function UserSidebar() {
                 initial={{ opacity:0, x:-16 }}
                 animate={{ opacity:1, x:0 }}
                 transition={{ delay: i * 0.05 }}
-                whileHover={{ x: collapsed ? 0 : 4, scale: 1.01 }}
+                whileHover={{
+                  x: collapsed ? 0 : 4,
+                  backgroundColor: 'rgba(239,68,68,0.12)',
+                  borderLeft: '2px solid #ef4444',
+                  color: '#fca5a5',
+                  scale: 1.01,
+                }}
                 whileTap={{ scale: 0.97 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden cursor-pointer ${
-                  isActive ? '' : 'hover:bg-white/5'
-                }`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden cursor-pointer`}
                 style={isActive ? {
                   background: darkMode
                     ? `linear-gradient(90deg, ${currentTheme?.primary}33, ${currentTheme?.primary}0a)`

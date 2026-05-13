@@ -20,7 +20,9 @@ export default function AdminSidebar() {
   const { user, logout } = useAuth();
   const { darkMode, currentTheme } = useTheme();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [pinned, setPinned]   = useState(false); // manually pinned open
+  const [hovered, setHovered] = useState(false);
+  const collapsed = !pinned && !hovered;          // collapsed when not pinned and not hovered
 
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -30,8 +32,10 @@ export default function AdminSidebar() {
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 72 : 240 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      animate={{ width: collapsed ? 68 : 240 }}
+      transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="h-screen flex flex-col overflow-hidden flex-shrink-0"
       style={{
         background:  darkMode
@@ -41,7 +45,7 @@ export default function AdminSidebar() {
         transition:  'background 0.4s ease',
       }}>
 
-      {/* Logo + collapse toggle */}
+      {/* Logo + pin toggle */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-white/5">
         <AnimatePresence>
           {!collapsed && (
@@ -60,15 +64,24 @@ export default function AdminSidebar() {
             </motion.div>
           )}
         </AnimatePresence>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 transition-colors flex-shrink-0">
-          <motion.span animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.3 }}>
-            ◀
-          </motion.span>
-        </motion.button>
+        {/* Pin button — only visible when expanded */}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.button
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+              onClick={() => setPinned(p => !p)}
+              title={pinned ? 'Unpin sidebar' : 'Pin sidebar open'}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-colors flex-shrink-0"
+              style={{
+                background: pinned ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
+                border: pinned ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: pinned ? '#a5b4fc' : '#64748b',
+              }}>
+              {pinned ? '📌' : '📍'}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* User info */}
@@ -102,7 +115,12 @@ export default function AdminSidebar() {
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
-                whileHover={{ x: collapsed ? 0 : 3 }}
+                whileHover={{
+                  x: collapsed ? 0 : 3,
+                  backgroundColor: 'rgba(239,68,68,0.12)',
+                  borderLeft: '2px solid #ef4444',
+                  color: '#fca5a5',
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative overflow-hidden`}
                 style={isActive ? {
                   background: darkMode

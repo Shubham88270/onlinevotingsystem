@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import DarkModeToggle from './DarkModeToggle.jsx';
 import Avatar from './Avatar.jsx';
+import UserNotifications from './UserNotifications.jsx';
 
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -94,6 +95,9 @@ export default function UserLayout() {
 
             {/* Dark/Light toggle */}
             <DarkModeToggle size="sm" />
+
+            {/* User Notifications */}
+            <UserNotifications />
 
             {/* Profile button */}
             <motion.button

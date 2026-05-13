@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator');
 const User     = require('../models/User');
 const { sendVerificationEmail } = require('../utils/sendEmail');
 const { logAudit } = require('../utils/audit');
+const { notifyAccountApproved, notifyAccountRejected, notifyPasswordChanged, notifyProfileUpdated } = require('../utils/notify');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -145,6 +146,9 @@ exports.approveUser = async (req, res) => {
 
     res.json({ message: `${user.name} approved successfully`, user });
 
+    // Notify user
+    await notifyAccountApproved(req.app, user._id);
+
     // Audit log
     await logAudit('USER_APPROVED', {
       actorId:  req.user._id,
@@ -164,6 +168,7 @@ exports.rejectUser = async (req, res) => {
     user.isApproved = false;
     await user.save();
     res.json({ message: `${user.name} rejected` });
+    await notifyAccountRejected(req.app, user._id);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 

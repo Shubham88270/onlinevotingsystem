@@ -14,9 +14,10 @@ if (missingEnv.length) {
   process.exit(1);
 }
 
-const authRoutes     = require('./routes/auth');
-const electionRoutes = require('./routes/elections');
-const voteRoutes     = require('./routes/votes');
+const authRoutes         = require('./routes/auth');
+const electionRoutes     = require('./routes/elections');
+const voteRoutes         = require('./routes/votes');
+const notificationRoutes = require('./routes/notifications');
 
 const app    = express();
 const server = http.createServer(app);
@@ -81,9 +82,10 @@ app.get('/api/test', (req, res) => res.json({
 }));
 
 // ── Routes ────────────────────────────────────────────────
-app.use('/api/auth',      authRoutes);
-app.use('/api/elections', electionRoutes);
-app.use('/api/votes',     voteRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/elections',     electionRoutes);
+app.use('/api/votes',         voteRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ── 404 handler ───────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ message: `Route ${req.path} not found` }));
@@ -103,6 +105,10 @@ io.on('connection', (socket) => {
     if (typeof electionId === 'string') socket.leave(electionId);
   });
   socket.on('joinAdmin', () => socket.join('admin'));
+  // User joins their personal room for notifications
+  socket.on('joinUser', (userId) => {
+    if (typeof userId === 'string') socket.join(`user_${userId}`);
+  });
   socket.on('error', (err) => console.error('Socket error:', err.message));
 });
 

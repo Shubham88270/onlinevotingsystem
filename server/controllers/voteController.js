@@ -4,6 +4,7 @@ const User      = require('../models/User');
 const Vote      = require('../models/Vote');
 const voteChain = require('../blockchain/VoteChain');
 const { logAudit } = require('../utils/audit');
+const { notifyVoteCast } = require('../utils/notify');
 
 // POST /api/votes — cast vote
 exports.castVote = async (req, res) => {
@@ -64,6 +65,9 @@ exports.castVote = async (req, res) => {
         desc:  `A vote was recorded in "${updatedElection.title}".`,
       });
     }
+
+    // Notify user
+    await notifyVoteCast(req.app, req.user._id, election.title);
 
     res.json({
       message: 'Vote cast successfully',

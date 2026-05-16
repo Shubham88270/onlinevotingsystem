@@ -8,6 +8,37 @@ import Avatar from '../../components/Avatar.jsx';
 const glass = { background:'rgba(255,255,255,0.04)', backdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.08)' };
 const inputCls = "w-full rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition";
 const inputStyle = { background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' };
+const selectCls = "w-full rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition appearance-none cursor-pointer";
+
+const COLLEGES = [
+  'Jabalpur Engineering College',
+  'Gyan Ganga Institute of Technology & Sciences (GGITS)',
+  'Lakshmi Narain College Of Technology (LNCT) Jabalpur',
+  'Hitkarini College of Engineering and Technology',
+  'Shri Ram Institute of Technology Jabalpur',
+  'Takshshila Institute Of Engineering & Technology',
+  'Saraswati Institute of Engineering & Technology',
+  'Global Engineering College',
+  'Baderia Global Institute of Engineering and Management Jabalpur',
+  'Laxmi Bai Sahuji Institute of Engineering & Technology Jabalpur',
+];
+
+const BRANCHES = [
+  'Computer Science Engineering (CSE)',
+  'Software Engineering',
+  'Information Technology (IT)',
+  'Artificial Intelligence & Data Science (AIML)',
+  'Electronics & Communication (ECE)',
+  'Electrical Engineering (EE)',
+  'Mechanical Engineering (ME)',
+  'Civil Engineering (CE)',
+];
+
+const UNIVERSITIES = [
+  'Rani Durgavati Vishwavidyalaya (RDVV)',
+  'Rajiv Gandhi Proudyogiki Vishwavidyalaya (RGPV)',
+  'IIITDM Jabalpur',
+];
 
 const emptyUser = () => ({ name:'', email:'', password:'', showPw:false, branch:'', college:'', university:'', rollNo:'', phone:'' });
 
@@ -39,6 +70,7 @@ export default function ManageUsers() {
   const [rows,       setRows]       = useState([emptyUser()]);
   const [regLoading, setRegLoading] = useState(false);
   const [tab,        setTab]        = useState('all');
+  const [formOpen,   setFormOpen]   = useState(false);
   const [otpModal,   setOtpModal]   = useState(null);  // { userId, email, name }
   const [otpValue,   setOtpValue]   = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -167,23 +199,57 @@ export default function ManageUsers() {
         <p className="text-slate-500 text-sm mt-1">Register and manage voter accounts</p>
       </motion.div>
 
-      {/* Register Form */}
+      {/* Register Form — Collapsible Dropdown */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
-        className="rounded-2xl p-6" style={glass}>
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
+        className="rounded-2xl overflow-hidden" style={glass}>
+
+        {/* Header / Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setFormOpen(p => !p)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left transition-colors hover:bg-white/[0.03]"
+        >
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background:'rgba(139,92,246,0.2)', border:'1px solid rgba(139,92,246,0.3)' }}>👥</div>
             <div>
               <h2 className="font-semibold text-white">Register New Users</h2>
               <p className="text-slate-500 text-xs">OTP sent to user email for verification</p>
             </div>
           </div>
-          <motion.button whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }} onClick={addRow}
-            className="text-sm px-4 py-2 rounded-xl font-medium text-white"
-            style={{ background:'linear-gradient(135deg, #8b5cf6, #6d28d9)', boxShadow:'0 4px 15px rgba(139,92,246,0.3)' }}>
-            + Add User
-          </motion.button>
-        </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs px-3 py-1 rounded-full font-medium text-violet-300"
+              style={{ background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.2)' }}>
+              {rows.length} user{rows.length !== 1 ? 's' : ''} queued
+            </span>
+            <motion.span
+              animate={{ rotate: formOpen ? 180 : 0 }}
+              transition={{ duration: 0.25 }}
+              className="text-slate-400 text-lg select-none"
+            >
+              ▾
+            </motion.span>
+          </div>
+        </button>
+
+        {/* Collapsible Body */}
+        <AnimatePresence initial={false}>
+          {formOpen && (
+            <motion.div
+              key="register-form"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div className="px-6 pb-6 pt-2 border-t" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+                <div className="flex justify-end mb-4">
+                  <motion.button type="button" whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }} onClick={addRow}
+                    className="text-sm px-4 py-2 rounded-xl font-medium text-white"
+                    style={{ background:'linear-gradient(135deg, #8b5cf6, #6d28d9)', boxShadow:'0 4px 15px rgba(139,92,246,0.3)' }}>
+                    + Add User
+                  </motion.button>
+                </div>
 
         <form onSubmit={handleRegisterAll} className="space-y-3">
           {rows.map((row, i) => (
@@ -287,15 +353,33 @@ export default function ManageUsers() {
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 mb-1 block">Branch</label>
-                  <input value={row.branch} onChange={e => updateRow(i,'branch',e.target.value)} placeholder="Computer Science" className={inputCls} style={inputStyle} />
+                  <div className="relative">
+                    <select value={row.branch} onChange={e => updateRow(i,'branch',e.target.value)} className={selectCls} style={inputStyle}>
+                      <option value="" disabled style={{ background:'#000', color:'#64748b' }}>Select Branch</option>
+                      {BRANCHES.map(b => <option key={b} value={b} style={{ background:'#000' }}>{b}</option>)}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">▾</span>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 mb-1 block">College</label>
-                  <input value={row.college} onChange={e => updateRow(i,'college',e.target.value)} placeholder="ABC College" className={inputCls} style={inputStyle} />
+                  <div className="relative">
+                    <select value={row.college} onChange={e => updateRow(i,'college',e.target.value)} className={selectCls} style={inputStyle}>
+                      <option value="" disabled style={{ background:'#000', color:'#64748b' }}>Select College</option>
+                      {COLLEGES.map(c => <option key={c} value={c} style={{ background:'#000' }}>{c}</option>)}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">▾</span>
+                  </div>
                 </div>
                 <div className="sm:col-span-3">
                   <label className="text-xs text-slate-500 mb-1 block">University</label>
-                  <input value={row.university} onChange={e => updateRow(i,'university',e.target.value)} placeholder="XYZ University" className={inputCls} style={inputStyle} />
+                  <div className="relative">
+                    <select value={row.university} onChange={e => updateRow(i,'university',e.target.value)} className={selectCls} style={inputStyle}>
+                      <option value="" disabled style={{ background:'#000', color:'#64748b' }}>Select University</option>
+                      {UNIVERSITIES.map(u => <option key={u} value={u} style={{ background:'#000' }}>{u}</option>)}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">▾</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -311,6 +395,10 @@ export default function ManageUsers() {
             {regLoading ? '⏳ Registering...' : `➕ Register ${rows.length} User(s)`}
           </motion.button>
         </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Users Table */}

@@ -7,6 +7,8 @@ const glass = { background:'rgba(255,255,255,0.04)', backdropFilter:'blur(16px)'
 const inputCls = "w-full rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition";
 const inputStyle = { background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' };
 
+const POSTS = ['Class Representative (CR)','President','Vice President','Secretary','Treasurer','Cultural Secretary','Sports Secretary','Technical Head','Other'];
+
 export default function ManageCandidates() {
   const [elections, setElections] = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -122,10 +124,18 @@ export default function ManageCandidates() {
                     value={forms[election._id]?.name || ''}
                     onChange={e => setForms(p => ({ ...p, [election._id]: { ...p[election._id], name:e.target.value } }))}
                     className={`flex-1 ${inputCls}`} style={inputStyle} />
-                  <input placeholder="Description (optional)"
-                    value={forms[election._id]?.description || ''}
-                    onChange={e => setForms(p => ({ ...p, [election._id]: { ...p[election._id], description:e.target.value } }))}
-                    className={`flex-1 ${inputCls}`} style={inputStyle} />
+                  <div className="relative flex-1">
+                    <select
+                      value={forms[election._id]?.description || ''}
+                      onChange={e => setForms(p => ({ ...p, [election._id]: { ...p[election._id], description:e.target.value } }))}
+                      className={`w-full rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition appearance-none cursor-pointer`}
+                      style={{ ...inputStyle, colorScheme:'dark' }}
+                    >
+                      <option value="" style={{ background:'#000', color:'#64748b' }}>Select Post</option>
+                      {POSTS.map(p => <option key={p} value={p} style={{ background:'#000' }}>{p}</option>)}
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">▾</span>
+                  </div>
                   <motion.button whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }}
                     onClick={() => handleAdd(election._id)}
                     className="text-white px-4 py-2 rounded-xl text-sm font-medium transition"

@@ -269,8 +269,8 @@ export default function ManageElections() {
                               <div>
                                 <label className={labelCls}>Applied Post *</label>
                                 <select value={c.appliedPost} onChange={e => updateCandidate(i,'appliedPost',e.target.value)}
-                                  className={inputCls} style={{ ...inputStyle, colorScheme:'dark' }}>
-                                  {POSTS.map(p => <option key={p} value={p}>{p}</option>)}
+                                  className={inputCls} style={{ ...inputStyle, colorScheme:'dark', background:'rgba(255,255,255,0.06)', color:'#e2e8f0' }}>
+                                  {POSTS.map(p => <option key={p} value={p} style={{ background:'#000', color:'#e2e8f0' }}>{p}</option>)}
                                 </select>
                               </div>
                               <div>

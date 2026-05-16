@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../../api/axios.jsx';
 import Spinner from '../../components/Spinner.jsx';
+import Avatar from '../../components/Avatar.jsx';
 
 const glass = { background:'rgba(255,255,255,0.04)', backdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.08)' };
 const inputCls = "w-full rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition";
@@ -359,9 +360,12 @@ export default function ManageUsers() {
                   className="border-t transition-colors hover:bg-white/[0.02]" style={{ borderColor:'rgba(255,255,255,0.04)' }}>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-violet-500/20 border border-white/10 flex items-center justify-center text-sm font-bold text-blue-300">
-                        {u.name?.charAt(0).toUpperCase()}
-                      </div>
+                      {/* Show profile photo if available, else initials */}
+                      <Avatar user={u} size={36} style={{
+                        borderRadius: 10,
+                        border: u.photo ? '2px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: u.photo ? '0 0 10px rgba(99,102,241,0.3)' : 'none',
+                      }} />
                       <div>
                         <p className="font-medium text-slate-200">{u.name}</p>
                         <p className="text-xs text-slate-600">{u.email}</p>

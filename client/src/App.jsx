@@ -28,7 +28,8 @@ import AdminSettings      from './pages/admin/AdminSettings.jsx';
 import BlockchainExplorer from './pages/admin/BlockchainExplorer.jsx';
 import AuditLogs          from './pages/admin/AuditLogs.jsx';
 
-// ── Guards ────────────────────────────────────────────────
+import Blogs        from './pages/Blogs.jsx';
+import FAQ          from './pages/FAQ.jsx';
 
 // Already logged in users ko /auth pe jaane se rokta hai
 const PublicRoute = ({ children }) => {
@@ -67,6 +68,8 @@ const AppRoutes = () => (
     <Route path="/auth"         element={<PublicRoute><Auth /></PublicRoute>} />
     <Route path="/verify-email" element={<VerifyEmail />} />
     <Route path="/panel"        element={<AutoRedirect />} />
+    <Route path="/blogs"        element={<Blogs />} />
+    <Route path="/faq"          element={<FAQ />} />
 
     {/* User Panel — sidebar layout */}
     <Route path="/dashboard" element={<UserRoute><UserLayout /></UserRoute>}>

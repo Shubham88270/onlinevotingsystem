@@ -45,7 +45,7 @@ export default function Auth() {
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Invalid credentials';
       if (err.code === 'ECONNABORTED' || !err.response) {
-        setServerError('⏳ Server is waking up (Render free tier). Please wait 30 seconds and try again.');
+        setServerError('⚠️ Server unreachable. Please check your connection and try again.');
       } else {
         setServerError(err.response?.status === 429 ? '⏳ Too many attempts. Please wait.' : msg);
       }

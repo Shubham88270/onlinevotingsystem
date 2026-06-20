@@ -27,18 +27,17 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://onlinevotingsystem-five.vercel.app',
   'https://smartvoteclg.vercel.app',
+  'https://votex.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-// Allow all Vercel preview deployments + Railway
-const vercelPreviewPattern = /^https:\/\/(onlinevotingsystem|smartvoteclg)(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
-const railwayPattern       = /^https:\/\/.*\.up\.railway\.app$/;
+// Allow all Vercel preview deployments
+const vercelPreviewPattern = /^https:\/\/(onlinevotingsystem|smartvoteclg|votex)(-[a-z0-9]+)*(-shubham88270s-projects)?\.vercel\.app$/;
 
 const corsOrigin = (origin, callback) => {
   if (!origin) return callback(null, true); // Postman / server-to-server
   if (allowedOrigins.includes(origin)) return callback(null, true);
   if (vercelPreviewPattern.test(origin)) return callback(null, true);
-  if (railwayPattern.test(origin)) return callback(null, true);
   console.warn(`⚠️  CORS blocked origin: ${origin}`);
   callback(new Error(`CORS blocked: ${origin}`));
 };
@@ -50,7 +49,6 @@ const io = new Server(server, {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       if (vercelPreviewPattern.test(origin)) return callback(null, true);
-      if (railwayPattern.test(origin)) return callback(null, true);
       callback(new Error(`Socket CORS blocked: ${origin}`));
     },
     methods: ['GET', 'POST'],

@@ -4,7 +4,7 @@ import { API_BASE_URL } from './config.js';
 // Use env variable in production, proxy in development
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // 60s — Render free tier cold start can take ~30-50s
+  timeout: 15000, // 15s — Vercel serverless functions
 });
 
 // Request — JWT token attach karo
@@ -26,9 +26,9 @@ api.interceptors.response.use(
         window.location.href = '/auth';
       }
     }
-    // Render cold start — server waking up
+    // Network error — server unreachable
     if (error.code === 'ECONNABORTED' || !error.response) {
-      error.message = '⏳ Server is waking up, please try again in a moment...';
+      error.message = '⚠️ Server unreachable, please try again in a moment...';
     }
     return Promise.reject(error);
   }

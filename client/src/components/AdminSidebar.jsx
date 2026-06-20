@@ -13,6 +13,8 @@ const menuItems = [
   { path: '/admin/results',    icon: '📊', label: 'Results'            },
   { path: '/admin/blockchain', icon: '⛓️', label: 'Blockchain Explorer'},
   { path: '/admin/audit',      icon: '📋', label: 'Audit Logs'         },
+  { path: '/admin/blogs',      icon: '📝', label: 'Manage Blogs'       },
+  { path: '/admin/faq',        icon: '❓', label: 'Manage FAQ'         },
   { path: '/admin/settings',   icon: '⚙️', label: 'Settings'           },
 ];
 

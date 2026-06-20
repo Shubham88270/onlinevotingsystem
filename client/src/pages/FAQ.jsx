@@ -2,128 +2,75 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 
-const faqs = [
+const FAQ_KEY = 'voteapp_faqs';
+
+const defaultFaqs = [
   {
     category: 'General',
     items: [
-      {
-        q: 'What is VoteApp?',
-        a: 'VoteApp is a secure online voting platform designed for colleges, organizations, and communities. It allows admins to create elections and voters to cast ballots digitally — with full transparency and blockchain-backed audit trails.',
-      },
-      {
-        q: 'Is VoteApp free to use?',
-        a: 'Yes, VoteApp is free for educational and organizational use. The platform is hosted on Vercel and uses MongoDB Atlas for data storage.',
-      },
-      {
-        q: 'Who can use VoteApp?',
-        a: 'Any organization, college, or community that needs a secure and transparent voting system. Admins manage elections and voters; eligible voters are registered and approved by the admin.',
-      },
+      { q: 'What is VoteApp?', a: 'VoteApp is a secure online voting platform designed for colleges, organizations, and communities.' },
+      { q: 'Is VoteApp free to use?', a: 'Yes, VoteApp is free for educational and organizational use.' },
     ],
   },
   {
     category: 'Voting',
     items: [
-      {
-        q: 'How do I cast my vote?',
-        a: 'Log in with your registered credentials, go to the Vote section, select the active election, choose your candidate, and confirm your vote. You will receive a confirmation once your vote is recorded.',
-      },
-      {
-        q: 'Can I change my vote after submitting?',
-        a: 'No. Once a vote is cast and recorded on the blockchain, it is final and cannot be changed or deleted. This ensures the integrity of the election.',
-      },
-      {
-        q: 'Can I vote more than once?',
-        a: 'No. The system ensures each voter can only vote once per election. Any attempt to vote again will be blocked automatically.',
-      },
-      {
-        q: 'What happens if I miss the voting deadline?',
-        a: 'Elections close automatically at the set end date and time. Votes cannot be cast after the deadline. Make sure to vote before the election ends.',
-      },
+      { q: 'How do I cast my vote?', a: 'Log in, go to the Vote section, select the active election, choose your candidate, and confirm.' },
+      { q: 'Can I change my vote after submitting?', a: 'No. Once a vote is cast and recorded on the blockchain, it is final and cannot be changed.' },
+      { q: 'Can I vote more than once?', a: 'No. Each voter can only vote once per election.' },
     ],
   },
   {
-    category: 'Account & Registration',
+    category: 'Account',
     items: [
-      {
-        q: 'How do I create an account?',
-        a: 'Self-registration is disabled for security reasons. Your account must be created by an admin. You will receive an OTP on your email to verify your identity before you can log in.',
-      },
-      {
-        q: 'I forgot my password. What should I do?',
-        a: 'Click "Forgot Password" on the login page, enter your registered email, and you will receive an OTP. Use the OTP to reset your password.',
-      },
-      {
-        q: 'Why is my account pending approval?',
-        a: 'All new voter accounts require admin approval before access is granted. This ensures only eligible voters participate. Contact your administrator if approval is taking too long.',
-      },
-      {
-        q: 'I did not receive the OTP email. What should I do?',
-        a: 'Check your spam/junk folder first. If it is not there, use the "Resend OTP" option. Make sure the email address you registered with is correct.',
-      },
+      { q: 'How do I create an account?', a: 'Self-registration is disabled. Your account must be created by an admin. You will receive an OTP to verify.' },
+      { q: 'I forgot my password. What should I do?', a: 'Click "Forgot Password", enter your email, and you will receive an OTP to reset your password.' },
     ],
   },
   {
-    category: 'Security & Privacy',
+    category: 'Security',
     items: [
-      {
-        q: 'Is my vote anonymous?',
-        a: 'Your vote is securely recorded and linked to your voter ID for audit purposes. Admins can verify that you voted, but the specific candidate you chose is kept confidential in the results display.',
-      },
-      {
-        q: 'How is the platform secured against fraud?',
-        a: 'VoteApp uses multiple security layers: OTP email verification, JWT authentication, admin approval workflow, blockchain audit trails, and rate limiting on all API endpoints.',
-      },
-      {
-        q: 'Can the admin change votes?',
-        a: 'No. Once a vote is recorded on the blockchain, it is immutable — not even the admin can alter it. The blockchain explorer is publicly visible for full transparency.',
-      },
-      {
-        q: 'Is my personal data safe?',
-        a: 'Yes. Passwords are hashed using bcrypt and never stored in plain text. All API communication uses HTTPS. Personal data is only used for authentication and election management.',
-      },
+      { q: 'Is my vote anonymous?', a: 'Admins can verify that you voted, but the specific candidate you chose is kept confidential.' },
+      { q: 'Can the admin change votes?', a: 'No. Once recorded on the blockchain, it is immutable — not even the admin can alter it.' },
     ],
   },
   {
-    category: 'Results & Transparency',
+    category: 'Results',
     items: [
-      {
-        q: 'When are results available?',
-        a: 'Results are available in real time as votes are cast. You can view live vote counts from the Results section. Final results are confirmed once the election closes.',
-      },
-      {
-        q: 'How can I verify the election results?',
-        a: 'Use the Blockchain Explorer to view the complete audit trail of all votes. Each vote is recorded as an immutable block, giving you full transparency to verify the outcome independently.',
-      },
-      {
-        q: 'What is the Blockchain Explorer?',
-        a: 'The Blockchain Explorer is a built-in tool that shows the complete chain of all recorded votes. Each block contains a hash, timestamp, and vote data — proving the election has not been tampered with.',
-      },
+      { q: 'When are results available?', a: 'Results are available in real time as votes are cast. Final results confirmed once the election closes.' },
     ],
   },
   {
     category: 'Technical',
     items: [
-      {
-        q: 'Which browsers are supported?',
-        a: 'VoteApp works on all modern browsers — Chrome, Firefox, Edge, Safari, and mobile browsers. We recommend using the latest version for the best experience.',
-      },
-      {
-        q: 'Does VoteApp work on mobile?',
-        a: 'Yes. VoteApp is fully responsive and works smoothly on smartphones and tablets. You can vote from any device with an internet connection.',
-      },
-      {
-        q: 'What technology powers VoteApp?',
-        a: 'VoteApp is built with React (frontend), Node.js + Express (backend), MongoDB (database), Socket.io (real-time updates), and a custom blockchain implementation for vote integrity.',
-      },
+      { q: 'Does VoteApp work on mobile?', a: 'Yes. VoteApp is fully responsive and works on smartphones, tablets, and desktops.' },
     ],
   },
 ];
+
+// Convert flat FAQ array (from admin) to grouped format for display
+function groupFaqs(flatFaqs) {
+  const grouped = {};
+  flatFaqs.forEach(f => {
+    if (!grouped[f.category]) grouped[f.category] = [];
+    grouped[f.category].push({ q: f.question, a: f.answer });
+  });
+  return Object.entries(grouped).map(([category, items]) => ({ category, items }));
+}
 
 export default function FAQ() {
   const { darkMode } = useTheme();
   const [openIndex, setOpenIndex] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
+
+  // Read from localStorage (admin edits sync here)
+  const faqs = (() => {
+    try {
+      const flat = JSON.parse(localStorage.getItem(FAQ_KEY));
+      return flat ? groupFaqs(flat) : defaultFaqs;
+    } catch { return defaultFaqs; }
+  })();
 
   const categories = ['All', ...faqs.map(f => f.category)];
 

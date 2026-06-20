@@ -28,8 +28,10 @@ import AdminSettings      from './pages/admin/AdminSettings.jsx';
 import BlockchainExplorer from './pages/admin/BlockchainExplorer.jsx';
 import AuditLogs          from './pages/admin/AuditLogs.jsx';
 
-import Blogs        from './pages/Blogs.jsx';
-import FAQ          from './pages/FAQ.jsx';
+import ManageBlogs         from './pages/admin/ManageBlogs.jsx';
+import ManageFAQ           from './pages/admin/ManageFAQ.jsx';
+import Blogs               from './pages/Blogs.jsx';
+import FAQ                 from './pages/FAQ.jsx';
 
 // Already logged in users ko /auth pe jaane se rokta hai
 const PublicRoute = ({ children }) => {
@@ -92,6 +94,8 @@ const AppRoutes = () => (
       <Route path="blockchain" element={<BlockchainExplorer />} />
       <Route path="settings"   element={<AdminSettings />}      />
       <Route path="audit"      element={<AuditLogs />}          />
+      <Route path="blogs"      element={<ManageBlogs />}        />
+      <Route path="faq"        element={<ManageFAQ />}          />
     </Route>
 
     <Route path="*" element={<AutoRedirect />} />

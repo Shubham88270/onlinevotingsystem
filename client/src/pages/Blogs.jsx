@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 
-const blogs = [
+const BLOG_KEY = 'voteapp_blogs';
+
+const defaultBlogs = [
   {
     id: 1,
     emoji: '🗳️',
     category: 'Voting',
     title: 'Why Online Voting is the Future of Democracy',
-    summary:
-      'Digital voting systems are transforming how communities make decisions — making participation easier, faster, and more transparent than ever before.',
+    summary: 'Digital voting systems are transforming how communities make decisions — making participation easier, faster, and more transparent than ever before.',
     content: `Online voting removes the barriers of physical presence, long queues, and geographic restrictions. With proper authentication and blockchain-backed transparency, digital elections can be more secure than traditional paper-based systems.\n\nModern online voting platforms use end-to-end encryption, OTP verification, and immutable audit trails to ensure every vote counts and cannot be tampered with. This makes it ideal for college elections, community polls, and organizational decision-making.`,
     author: 'VoteApp Team',
     date: 'June 10, 2026',
@@ -20,9 +21,8 @@ const blogs = [
     emoji: '🔗',
     category: 'Blockchain',
     title: 'How Blockchain Makes Voting Tamper-Proof',
-    summary:
-      'Blockchain technology creates an immutable ledger of every vote cast — ensuring complete transparency and eliminating any possibility of fraud.',
-    content: `Each vote is recorded as a block in a chain, cryptographically linked to the previous one. Once a vote is cast and added to the chain, it cannot be altered or deleted without detection.\n\nThis means every voter, observer, and auditor can independently verify the election results. The decentralized nature of blockchain ensures no single party has control over the outcome — making it the gold standard for trustworthy elections.`,
+    summary: 'Blockchain technology creates an immutable ledger of every vote cast — ensuring complete transparency and eliminating any possibility of fraud.',
+    content: `Each vote is recorded as a block in a chain, cryptographically linked to the previous one. Once a vote is cast and added to the chain, it cannot be altered or deleted without detection.\n\nThis means every voter, observer, and auditor can independently verify the election results.`,
     author: 'Tech Team',
     date: 'June 5, 2026',
     readTime: '5 min read',
@@ -32,9 +32,8 @@ const blogs = [
     emoji: '🔒',
     category: 'Security',
     title: 'Top 5 Security Features in Modern Voting Systems',
-    summary:
-      'From OTP verification to JWT authentication, here are the key security layers that protect your vote from start to finish.',
-    content: `1. **OTP Email Verification** — Every voter must verify their identity via a one-time password sent to their registered email before they can cast a vote.\n\n2. **JWT Authentication** — Secure, time-limited tokens ensure that only authenticated users can access voting endpoints.\n\n3. **Blockchain Audit Trail** — Every action is logged immutably, making post-election audits straightforward.\n\n4. **Admin Approval Flow** — New voters require admin approval before gaining access, preventing unauthorized participation.\n\n5. **Rate Limiting** — API rate limits prevent brute-force attacks and spam voting attempts.`,
+    summary: 'From OTP verification to JWT authentication, here are the key security layers that protect your vote.',
+    content: `1. OTP Email Verification\n2. JWT Authentication\n3. Blockchain Audit Trail\n4. Admin Approval Flow\n5. Rate Limiting`,
     author: 'Security Team',
     date: 'May 28, 2026',
     readTime: '6 min read',
@@ -44,9 +43,8 @@ const blogs = [
     emoji: '📊',
     category: 'Results',
     title: 'Real-Time Election Results with Socket.io',
-    summary:
-      'Live vote counts update instantly as ballots are cast — no need to refresh the page. Here is how we built it.',
-    content: `Using Socket.io, our platform pushes live vote updates to all connected clients the moment a vote is recorded. This means candidates, observers, and administrators see results update in real time without any manual refresh.\n\nThe server emits events on each vote, and the client listens and updates the chart data dynamically using Chart.js. This creates an engaging and transparent election experience.`,
+    summary: 'Live vote counts update instantly as ballots are cast — no need to refresh the page.',
+    content: `Using Socket.io, our platform pushes live vote updates to all connected clients the moment a vote is recorded. This creates an engaging and transparent election experience.`,
     author: 'Dev Team',
     date: 'May 20, 2026',
     readTime: '3 min read',
@@ -56,9 +54,8 @@ const blogs = [
     emoji: '🎓',
     category: 'Guide',
     title: 'How to Set Up Your First Election in VoteApp',
-    summary:
-      'A step-by-step guide for administrators to create elections, add candidates, and manage voters on the platform.',
-    content: `**Step 1** — Log in with your admin credentials and navigate to the Admin Panel.\n\n**Step 2** — Go to "Manage Elections" and click "Create Election". Fill in the title, description, start date, and end date.\n\n**Step 3** — Add candidates to the election with their names, photos, and party/position details.\n\n**Step 4** — Register voters under "Manage Users". Each voter will receive an OTP to verify their identity.\n\n**Step 5** — Activate the election. Voters can now log in and cast their ballots. Monitor live results from the dashboard.`,
+    summary: 'A step-by-step guide for administrators to create elections, add candidates, and manage voters.',
+    content: `Step 1 — Log in and go to Admin Panel.\nStep 2 — Create Election with title, description, start and end date.\nStep 3 — Add candidates.\nStep 4 — Register voters.\nStep 5 — Activate the election.`,
     author: 'VoteApp Team',
     date: 'May 15, 2026',
     readTime: '5 min read',
@@ -68,9 +65,8 @@ const blogs = [
     emoji: '🌐',
     category: 'Accessibility',
     title: 'Making Voting Accessible for Everyone',
-    summary:
-      'Inclusive design principles that ensure every eligible voter can participate regardless of their device or ability.',
-    content: `VoteApp is designed with accessibility at its core. The platform works seamlessly on mobile phones, tablets, and desktops — so voters can cast their ballot from any device.\n\nDark mode support reduces eye strain for users in low-light environments. Large, clearly labeled buttons and high-contrast text ensure readability. Future updates will include screen reader support and multiple language options to reach even more voters.`,
+    summary: 'Inclusive design principles that ensure every eligible voter can participate regardless of their device.',
+    content: `VoteApp works seamlessly on mobile phones, tablets, and desktops. Dark mode support reduces eye strain. Large, clearly labeled buttons ensure readability.`,
     author: 'Design Team',
     date: 'May 8, 2026',
     readTime: '4 min read',
@@ -83,6 +79,11 @@ export default function Blogs() {
   const { darkMode } = useTheme();
   const [selected, setSelected] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
+
+  // Read from localStorage (admin edits sync here)
+  const blogs = (() => {
+    try { return JSON.parse(localStorage.getItem(BLOG_KEY)) || defaultBlogs; } catch { return defaultBlogs; }
+  })();
 
   const filtered = activeCategory === 'All'
     ? blogs
